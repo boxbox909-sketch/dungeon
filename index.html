@@ -228,6 +228,8 @@ dialog.cfm{max-width:min(440px,92vw)}
 .tipkv .tip b{display:inline;font-size:inherit}.tipkv .tip span{font-size:inherit;color:inherit}.tipkv .tip .gold{color:#ffd27a}.tipkv .tip .neg{color:var(--red)}.tipkv .cbdown>b{color:var(--red)}.tipkv .tip .meta{color:var(--dim);font-size:11.5px}.tipkv .tip>b:first-child{font-size:13.5px}.tipkv>div{cursor:help}.tipkv .cbup>b{color:#ffd27a}
 @media(hover:hover){.tipkv>div:hover>.tip,.tipkv>div:focus>.tip{display:block}}
 .bneg{color:var(--red)!important}.blow{color:#3fc9a8!important}.bhigh{color:#ffd27a!important}.tipkv .cb>b{color:inherit}
+.icell.can,.trow.can{border-color:#7fd1c788;box-shadow:0 0 14px rgba(127,209,199,.28);background:rgba(127,209,199,.06)}
+.icell.off,.trow.off{opacity:.45;filter:grayscale(.5)}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:20;display:none;padding:10px 16px}
 .lb img{display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:6px}
 .fade{animation:in .35s ease}@keyframes in{from{opacity:0;transform:translateY(4px)}}@media(prefers-reduced-motion:reduce){.fade{animation:none}}
@@ -245,9 +247,9 @@ dialog.cfm{max-width:min(440px,92vw)}
  <nav id="nav">
   <button class="tab" data-v="events">던전 이벤트</button>
   <button class="tab" data-v="party">파티 명부</button>
-  <button class="tab" data-v="shop">상점</button>
   <button class="tab" data-v="plaza">광장<span id="b-plaza"></span></button>
   <button class="tab" data-v="rooms">대화방<span id="b-rooms"></span></button>
+  <button class="tab" data-v="shop">상점</button>
   <button class="tab" data-v="items" id="tab-items" hidden>아이템 관리</button>
   <button class="tab" data-v="admin" id="tab-admin" hidden>관리</button>
  </nav>
@@ -477,6 +479,7 @@ dialog.cfm{max-width:min(440px,92vw)}
  <div class="row"><span class="sp"></span><button class="btn ghost" value="cancel" formnovalidate>닫기</button><button class="btn" value="ok">확인</button></div>
 </form></dialog>
 
+<div id="shopwin" class="fwin" hidden role="dialog" aria-labelledby="shopwttl"><div class="fhd" id="shopwhd"><span id="shopwhead"></span><b id="shopwttl" class="sp">간이 상점</b><button class="btn ghost small" id="shopwx" aria-label="상점 닫기">닫기</button></div><div class="fbody" id="shopwbody"></div></div>
 <div id="bagwin" class="fwin" hidden role="dialog" aria-labelledby="bagttl"><div class="fhd" id="baghd"><span id="baghead"></span><b id="bagttl" class="sp">보관함</b><button class="btn ghost small" id="bagx" aria-label="보관함 닫기">닫기</button></div><div class="fbody" id="bagbody"></div></div>
 <div id="toast" class="panel"></div>
 
@@ -494,7 +497,7 @@ dialog.cfm{max-width:min(440px,92vw)}
    stories/<id> : 여럿이 돌려 쓰는 탐색 이야기 ({이름} 자리에 캐릭터 이름) · 탐색 기록의 storyId
    items/<키> : 아이템 (기본 아이템은 덮어쓰기, 새 키는 새 아이템) · config/admins {ids} : 게임 안 관리자 계정
    raids/<id> (boss, dkey, participants, debuffs), raids/<id>/log/<id> : 보스 레이드 · config/bosses {imgs, drops} : 보스별 그림·칭호
-   chars 의 autoRaid(레이드 자동 전투 켜짐) · 레이드 성장의 결정은 저장 없이 raids 에서 계산(crystalFor)
+   chars 의 titleIds(함께 단 칭호, 레벨 10마다 1칸) · chars 의 autoRaid(레이드 자동 전투 켜짐) · 레이드 성장의 결정은 저장 없이 raids 에서 계산(crystalFor)
    chars 의 spentGold(상점에서 쓴 골드), shop{slot,reroll,b}, trophyUsed(교환에 쓴 증표 수), statBoost{str..}(성장의 결정)
    chars 의 bag[{id,n,t,v,d}], soldGold : 판매용 전리품 가방, 판매로 번 골드 · 탐색 기록의 dkey : 던전 종류
    아르바이트은 저장 없이 created 와 6시간 단위로 계산 (공식을 바꾸면 과거 보상이 달라지니 주의)
@@ -620,7 +623,10 @@ function dropFor(r,uid){if(r?.status!=='cleared'||!(+r.participants?.[uid]?.coun
 function ownedTitles(c){if(!c)return[];const o=new Set(Array.isArray(c.ownedTitles)?c.ownedTitles:[]),rv=Array.isArray(c.revokedTitles)?c.revokedTitles:[];if(!rv.includes('egg-deadline')&&hunts(c).some(h=>h.egg))o.add('egg-deadline');for(const r of raids){const t=dropFor(r,c.id);if(t&&!rv.includes(t))o.add(t)}if(c.titleId)o.add(c.titleId);return [...o].filter(titleObj)}
 function curTitle(c){const t=titleObj(c?.titleId);if(t)return t;if(c?.title)return{name:c.title};const lv=prog(c).lv;return{name:TITLES.find(x=>lv>=x[0])[1]}}
 /* 보너스: 장착한 칭호(패시브 아님) + 보유한 모든 패시브 칭호. 최종 스탯은 0~100 */
-function bonusParts(c){const eq={},pas={},e=titleObj(c?.titleId);if(e&&!e.passive)for(const k in e.bonus||{})eq[k]=+e.bonus[k]||0;
+/* 칭호 겹쳐 달기: 레벨 10마다 1칸씩 더 (1 + 레벨÷10). titleId = 이름 옆에 보이는 대표 칭호, titleIds = 함께 단 칭호 */
+const titleSlots=c=>1+Math.floor(prog(c).lv/10);
+function eqTitles(c){const own=new Set(ownedTitles(c));return [...new Set([c?.titleId,...(Array.isArray(c?.titleIds)?c.titleIds:[])])].filter(id=>id&&titleObj(id)&&own.has(id)).slice(0,titleSlots(c))}
+function bonusParts(c){const eq={},pas={};for(const id of eqTitles(c)){const e=titleObj(id);if(e&&!e.passive)for(const k in e.bonus||{})eq[k]=(eq[k]||0)+(+e.bonus[k]||0)}
  for(const id of ownedTitles(c)){const t=titleObj(id);if(t?.passive)for(const k in t.bonus||{})pas[k]=(pas[k]||0)+(+t.bonus[k]||0)}return{eq,pas}}
 const tBonus=c=>{const {eq,pas}=bonusParts(c),o={};for(const [k] of STATS)o[k]=(eq[k]||0)+(pas[k]||0);return o};
 function effStats(c){const {eq,pas}=bonusParts(c),o={};for(const [k] of STATS)o[k]=Math.max(0,Math.min(STATCAP,(+c?.stats?.[k]||0)+(+c?.statBoost?.[k]||0)+(eq[k]||0)+(pas[k]||0)));return o}
@@ -636,7 +642,7 @@ const tbText=t=>[bonusText(t?.bonus),cbText(t?.cbonus)].filter(Boolean).join(' �
 const bcls=n=>n<0?'bneg':n<=10?'blow':'bhigh';
 const bv=n=>`<span class="${bcls(n)}">${sgn(n)}</span>`;
 const tbHTML=t=>[...STATS.filter(([k])=>+t?.bonus?.[k]).map(([k,n])=>`${n} ${bv(+t.bonus[k])}`),...Object.keys(CBN).filter(k=>+t?.cbonus?.[k]).map(k=>`${CBN[k]} ${bv(+t.cbonus[k])}`)].join(' · ');
-function cBonus(c){const o={agi:0,atk:0,def:0,heal:0},add=t=>{for(const k in o)o[k]+=+t?.cbonus?.[k]||0};const e=titleObj(c?.titleId);if(e&&!e.passive)add(e);for(const id of ownedTitles(c)){const t=titleObj(id);if(t?.passive)add(t)}return o}
+function cBonus(c){const o={agi:0,atk:0,def:0,heal:0},add=t=>{for(const k in o)o[k]+=+t?.cbonus?.[k]||0};for(const id of eqTitles(c)){const e=titleObj(id);if(e&&!e.passive)add(e)}for(const id of ownedTitles(c)){const t=titleObj(id);if(t?.passive)add(t)}return o}
 /* 기본 칭호: 아르바이트 이스터에그로 얻어요 (관리 탭에서 고치면 그 내용이 우선) */
 const BUILTIN_TITLES=[{id:'egg-deadline',name:'마감에 시달리는',color:'#ff5c8a',bg:'#3a0f1e',bonus:{},cbonus:{agi:-1,heal:-1,atk:3,def:3},drop:false,passive:false,ts:1,builtin:true}];
 const withBuiltin=list=>{const ids=new Set(list.map(t=>t.id));return [...list.map(t=>{const b=BUILTIN_TITLES.find(x=>x.id===t.id);return b?{...b,...t,builtin:true}:t}),...BUILTIN_TITLES.filter(b=>!ids.has(b.id))]};
@@ -666,7 +672,7 @@ addEventListener('hashchange',route);
 function renderMine(){const c=myChar(),el=$('#mine'),list=myChars();$('.layout').classList.toggle('fold',fold);
  const tog=`<button class="tog" id="tog" aria-label="${fold?'내 캐릭터 펼치기':'내 캐릭터 숨기기'}" aria-expanded="${!fold}">${fold?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 5l-7 7 7 7"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 5l7 7-7 7"/></svg>'}</button>`;
  const heads=`<div class="heads">${list.map(x=>`<button class="hbtn ${x.id===me?'on':''}" data-act="${esc(x.id)}" aria-label="${esc(x.name)}${x.id===me?' (활동 중)':' 으로 바꾸기'}" title="${esc(x.name)}">${av(x)}${fold?`<span>${esc(x.name)}</span>`:''}</button>`).join('')}${acct&&canWrite&&list.length<MAXCHARS?`<button class="hbtn add" data-edit="new" aria-label="새 캐릭터 만들기" title="새 캐릭터 만들기"><span class="av">+</span>${fold?'<span>추가</span>':''}</button>`:''}</div>`;
- if(fold){el.innerHTML=tog+heads;return}
+ if(fold){el.innerHTML=tog+heads+(c?'<button class="tog" data-shopwin title="간이 상점 열기" aria-label="간이 상점 열기"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"M4 9h16l-1.5 10h-13z\"/><path d=\"M8 9V7a4 4 0 018 0v2\"/></svg></button>':'');return}
  if(!c){el.innerHTML=`<div class="row" style="margin-bottom:8px"><h3 class="sp">내 캐릭터</h3>${tog}</div><p class="note">캐릭터를 만들면 대화하고 모험할 수 있어요. 계정당 ${MAXCHARS}개.</p><button class="btn" data-edit="new" ${acct&&canWrite?'':'disabled'}>캐릭터 등록</button>${MODE==='firebase'&&acct?`<p class="meta" style="margin-top:12px;overflow-wrap:anywhere">계정 코드 · ${esc(acct)}<br>예전 캐릭터를 옮겨 왔다면 이 코드를 관리자에게 알려 주세요.</p>`:''}`;return}
  const p=prog(c),col=clsColor(c.cls);
  el.innerHTML=`<div class="row" style="margin-bottom:10px"><span class="meta sp">활동 중인 캐릭터 · ${list.length} / ${MAXCHARS}</span>${tog}</div>${heads}<div class="wrapme fade"><div class="head" style="background:${col}">${face(c)?`<img alt="" src="${esc(blob(face(c)))}">`:esc(c.name[0])}</div>
@@ -675,7 +681,7 @@ function renderMine(){const c=myChar(),el=$('#mine'),list=myChars();$('.layout')
   <div class="stats">${(()=>{const b=combat(c),h=hpState(c);return `<div class="row" style="font-size:13.5px"><span class="sp">체력</span><span>${h.cur} / ${h.max}</span></div><div class="xp" style="height:5px;margin:4px 0"><b style="width:${h.cur/h.max*100}%;background:${hpCol(h.cur,h.max)}"></b></div><div class="meta">${hpLine(c)}</div>
    <div class="kv tipkv" style="grid-template-columns:repeat(4,1fr);margin:10px 0 0">${cbCell(c,b,'agi')}${cbCell(c,b,'atk')}${cbCell(c,b,'def')}${cbCell(c,b,'heal')}</div>`})()}</div>
   <div class="kv"><div><b>${p.gold}</b><span>골드</span></div><div><b>${p.runs}</b><span>원정</span></div><button class="kvbtn" data-bag="${esc(c.id)}" aria-label="보관함 열기"><b>${bagCount(c)}</b><span>보관함</span></button></div></div>
-  <button class="btn ghost small" style="width:100%" data-c="${esc(c.id)}">내 캐릭터 편집</button>${MODE==='firebase'?`<p class="meta" style="margin:10px 0 0;overflow-wrap:anywhere">계정 코드 · ${esc(acct)}</p>`:''}`}
+  <div class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn ghost small sp" data-c="${esc(c.id)}">내 캐릭터 편집</button><button class="btn ghost small" data-shopwin title="간이 상점 열기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="16" height="16" aria-hidden="true"><path d="M4 9h16l-1.5 10h-13z"/><path d="M8 9V7a4 4 0 018 0v2"/></svg> 상점</button></div>${MODE==='firebase'?`<p class="meta" style="margin:10px 0 0;overflow-wrap:anywhere">계정 코드 · ${esc(acct)}</p>`:''}`}
 $('#mine').addEventListener('click',e=>{if(e.target.closest('#tog')){fold=!fold;store('fold',fold);renderMine()}});
 
 /* ---- 공용 메시지 렌더 ---- */
@@ -770,7 +776,7 @@ function renderHolders(){const box=$('#tholders');if(!editTitle||!titleObj(editT
 $('#tholdlist').addEventListener('click',async e=>{const b=e.target.closest('[data-trevoke]');if(!b||!editTitle)return;const c=charMap()[b.dataset.trevoke];if(!c)return;
  if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='빼기?';b.classList.add('arm');return}
  const tid=editTitle,rv=new Set(Array.isArray(c.revokedTitles)?c.revokedTitles:[]);rv.add(tid);
- try{await patchChar(c,{ownedTitles:(Array.isArray(c.ownedTitles)?c.ownedTitles:[]).filter(x=>x!==tid),revokedTitles:[...rv],...(c.titleId===tid?{titleId:''}:{})});toast(`${c.name}에게서 칭호를 뺐어요`)}catch(err){toast('칭호를 빼지 못했어요')}});
+ try{await patchChar(c,{ownedTitles:(Array.isArray(c.ownedTitles)?c.ownedTitles:[]).filter(x=>x!==tid),revokedTitles:[...rv],...(eqTitles(c).includes(tid)?(()=>{const l=eqTitles(c).filter(x=>x!==tid);return{titleId:l[0]||'',titleIds:l.slice(1)}})():{})});toast(`${c.name}에게서 칭호를 뺐어요`)}catch(err){toast('칭호를 빼지 못했어요')}});
 $('#taddbtn').addEventListener('click',async()=>{const c=charMap()[$('#taddsel').value];if(!c||!editTitle)return;const tid=editTitle;
  try{await patchChar(c,{ownedTitles:[...new Set([...(Array.isArray(c.ownedTitles)?c.ownedTitles:[]),tid])],revokedTitles:(Array.isArray(c.revokedTitles)?c.revokedTitles:[]).filter(x=>x!==tid),...(titleObj(c.titleId)?{}:{titleId:tid})});toast(titleObj(c.titleId)?`${c.name}에게 칭호를 줬어요 (장착은 캐릭터 정보에서)`:`${c.name}에게 칭호를 주고 바로 장착했어요`)}catch(err){toast('칭호를 주지 못했어요')}});
 function resetTitleForm(){editTitle=null;$('#ftform').reset();setColor('col','#1b1400');setColor('bg','#f5c542');$('#tsave').textContent='칭호 추가';$('#tcancel').hidden=true;tprev();renderHolders()}
@@ -875,7 +881,7 @@ function renderChar(){if(view()!=='char')return;const id=charView||me,c=charMap(
    <h3>스탯</h3>${statBars(c)}
    <div class="kv"><div><b>${p.gold}</b><span>골드</span></div><div><b>${p.runs}</b><span>원정</span></div><div><b>${p.loot.length}</b><span>전리품</span></div></div>
    <h3>전투 능력치</h3>${(()=>{const b=combat(c);return `<div class="kv tipkv" style="grid-template-columns:repeat(5,1fr)">${cbCell(c,b,'hp',`${hpState(c).cur} / ${b.hp}`)}${cbCell(c,b,'agi')}${cbCell(c,b,'atk')}${cbCell(c,b,'def')}${cbCell(c,b,'heal')}</div><p class="meta" style="margin:-6px 0 0">${esc(hpLine(c))} · 피해를 입은 뒤 10분마다 최대 체력의 10%씩 회복해요</p>`})()}
-   <h3>보유 칭호</h3>${(()=>{const o=ownedTitles(c),can=canEditChar(id);return o.length?`<p class="note" style="margin:2px 0 6px">장착 칭호 1개 + 모든 [패시브] 칭호가 적용돼요.</p><div class="tlist">${o.map(tid=>{const t=titleObj(tid),on=c.titleId===tid,b=tbText(t);return `<div class="trow${on?' on':''}${t.passive?' pas':''}">${chipOf(t)}<span class="sp ${b?'':'meta'}">${t.passive?'<span class="pastag">[패시브]</span> ':''}${b?tbHTML(t):'보너스 없음'}</span>${on?'<span class="title">장착 중</span>'+(can?`<button class="btn ghost small" data-equip="">해제</button>`:''):can?`<button class="btn ghost small" data-equip="${esc(tid)}">장착</button>`:''}</div>`}).join('')}</div>`:'<p class="meta" style="margin-top:4px">아직 없음 · 레이드 보상이나 관리자에게서 받을 수 있어요</p>'})()}
+   <h3>보유 칭호</h3>${(()=>{const o=ownedTitles(c),can=canEditChar(id);const eqs=eqTitles(c),slots=titleSlots(c),full=eqs.length>=slots;return o.length?`<p class="note" style="margin:2px 0 6px">장착 ${eqs.length} / ${slots}칸 (레벨 10마다 +1칸) · [패시브]는 모두 적용 · 맨 앞 칭호가 이름 옆에 보여요</p><div class="tlist">${o.map(tid=>{const t=titleObj(tid),on=eqs.includes(tid),b=tbText(t);return `<div class="trow${on?' on':''}${t.passive?' pas':''}">${chipOf(t)}<span class="sp ${b?'':'meta'}">${t.passive?'<span class="pastag">[패시브]</span> ':''}${b?tbHTML(t):'보너스 없음'}</span>${on?`<span class="title">${tid===eqs[0]?'대표':'장착 중'}</span>`+(can?`${tid!==eqs[0]?`<button class="btn ghost small" data-tmain="${esc(tid)}">대표로</button>`:''}<button class="btn ghost small" data-unequip="${esc(tid)}">해제</button>`:''):can?`<button class="btn ghost small" data-equip="${esc(tid)}" ${full?'disabled title="장착 칸이 가득 찼어요"':''}>장착</button>`:''}</div>`}).join('')}</div>`:'<p class="meta" style="margin-top:4px">아직 없음 · 레이드 보상이나 관리자에게서 받을 수 있어요</p>'})()}
    <h3>특수 스킬</h3>${Array.isArray(c.skills)&&c.skills.length?`<div class="sklist">${c.skills.map(k=>`<div><b>${esc(k.name)}</b><span class="meta">${esc(SKTYPES[k.type]||'')} · 위력 ${+k.power||0}${k.desc?' · '+esc(k.desc):''}</span></div>`).join('')}</div>`:'<p class="meta" style="margin-top:4px">아직 없음 · 관리자가 부여할 수 있어요</p>'}
    <h3>보관함</h3>${(()=>{const v=inv(c),ks=Object.keys(ITEMS).filter(k=>v[k]>0),bl=Array.isArray(c.bag)?c.bag.length:0;
     return `<div class="row" style="margin:6px 0 4px;gap:6px">${ks.slice(0,10).map(k=>`<span title="${esc(ITEMS[k].name)} ×${v[k]}" style="position:relative">${itemIcon(k)}<span class="meta" style="position:absolute;right:-2px;bottom:-6px;background:#14161d;border-radius:6px;padding:0 3px">${v[k]}</span></span>`).join('')}${ks.length>10?'<span class="meta">…</span>':''}</div>
@@ -893,8 +899,12 @@ $('#cview').addEventListener('click',async e=>{const si=e.target.closest('[data-
   const v=sold.reduce((a,x)=>a+(+x.v||0),0);sb.disabled=true;
   try{await patchChar(c,{bag:bag.filter(x=>!sold.includes(x)),soldGold:(+c.soldGold||0)+v});toast(`${v}골드에 팔았어요`)}catch(err){toast('팔지 못했어요');sb.disabled=false}return}
  const u=e.target.closest('[data-usepot]');if(u){u.disabled=true;await useHealOutside(charMap()[charView||me],u.dataset.usepot);return}
- const b=e.target.closest('[data-equip]');if(!b)return;const c=charMap()[charView||me];if(!c||!canEditChar(c.id))return;
- b.disabled=true;try{await patchChar(c,{titleId:b.dataset.equip});toast(b.dataset.equip?'칭호를 장착했어요':'칭호를 해제했어요')}catch(err){toast('바꾸지 못했어요');b.disabled=false}});
+ const b=e.target.closest('[data-equip],[data-unequip],[data-tmain]');if(!b)return;const c=charMap()[charView||me];if(!c||!canEditChar(c.id))return;
+ let list=eqTitles(c),msg;
+ if(b.dataset.equip){if(list.length>=titleSlots(c))return toast('장착 칸이 가득 찼어요');list=[...list,b.dataset.equip];msg='칭호를 장착했어요'}
+ else if(b.dataset.unequip){list=list.filter(x=>x!==b.dataset.unequip);msg='칭호를 해제했어요'}
+ else{list=[b.dataset.tmain,...list.filter(x=>x!==b.dataset.tmain)];msg='대표 칭호를 바꿨어요'}
+ b.disabled=true;try{await patchChar(c,{titleId:list[0]||'',titleIds:list.slice(1)});toast(msg)}catch(err){toast('바꾸지 못했어요');b.disabled=false}});
 /* ---- 상세 보기 / 공용 클릭 ---- */
 function openArt(id){const a=arts.find(x=>x.id===id);if(!a)return;const c=charMap()[a.by];
  $('#vbody').innerHTML=`<div class="lb"><img alt="" src="${esc(blob(a.asset))}"></div><p><button class="who" data-c="${esc(a.by)}">${esc(c?.name||'떠난 모험가')}</button> <span class="meta">${when(a.ts)}</span><br>${richText(a.caption||'')}</p>
@@ -1421,13 +1431,16 @@ async function pAfterResp(){const P=(await partyRef(partyRid).get()).data();if(!
  if(P.bossAtk.targets.every(id=>P.bossAtk.resp?.[id]||!alive(P.members[id])))await pAdvance(P.step);await pCheckEnd()}
 
 /* ---- 내 행동 ---- */
-function pAsk(o){pRoll=o;renderBattle()}
+function pAsk(o){if(pActing||pRoll)return;pRoll=o;renderBattle()}
 /* 주사위 눈이 몇 이상이어야 성공인지 (보정 포함, 20은 무조건 성공·1은 무조건 실패) */
 const needOf=(dc,mod)=>Math.max(2,Math.min(20,(+dc||0)-(+mod||0)));
-async function pDoRoll(){if(!pRoll||pRoll.rolling)return;pRoll.rolling=true;const o=pRoll,roll=await rollDie($('#btdie')),tot=roll+o.mod,ok=roll===20||(roll!==1&&tot>=o.dc),need=needOf(o.dc,o.mod);
- o.result={roll,ok};renderBattle();await sleep(1500);pRoll=null;
- try{await o.done(ok,roll,`(주사위 ${roll} · ${need} 이상 성공)`)}catch(e){toast('저장하지 못했어요')}renderBattle()}
-function pRespond(kind){const P=party,mm=pMine(P);if(!mm||!P?.bossAtk)return;const [id,m]=mm,r=raids.find(x=>x.id===partyRid),bs=bossStats(r),base=P.bossAtk.base,step=P.step;
+/* 판정 결과를 저장하는 동안은 다른 행동을 받지 않아요 (같은 차례에 두 번 행동하는 것 방지) */
+let pActing=false;
+async function pDoRoll(){if(!pRoll||pRoll.rolling||pActing)return;pRoll.rolling=true;const o=pRoll,roll=await rollDie($('#btdie')),tot=roll+o.mod,ok=roll===20||(roll!==1&&tot>=o.dc),need=needOf(o.dc,o.mod);
+ o.result={roll,ok};renderBattle();await sleep(1500);pRoll=null;pActing=true;renderBattle();
+ try{await o.done(ok,roll,`(주사위 ${roll} · ${need} 이상 성공)`)}catch(e){toast('저장하지 못했어요')}
+ await sleep(350);pActing=false;renderBattle()}
+function pRespond(kind){if(pActing||pRoll)return;const P=party,mm=pMine(P);if(!mm||!P?.bossAtk)return;const [id,m]=mm,r=raids.find(x=>x.id===partyRid),bs=bossStats(r),base=P.bossAtk.base,step=P.step;
  pAsk({label:kind==='evade'?'회피 판정':'방어 판정',mod:kind==='evade'?half(m.cb.agi):half(m.cb.def)+2,dc:kind==='evade'?8+bs.agi:6+bs.atk,done:async(ok,roll,tag)=>{
   const cur=(await partyRef(partyRid).get()).data();if(cur?.step!==step||cur.bossAtk?.resp?.[id])return;
   let dmg=0,txt;if(ok)txt=`${m.name}: ${kind==='evade'?'몸을 날려 피했다':'막아냈다'}! 피해 없음 ${tag}`;
@@ -1435,7 +1448,7 @@ function pRespond(kind){const P=party,mm=pMine(P);if(!mm||!P?.bossAtk)return;con
   const hp=Math.max(0,(+cur.members[id].hp||0)-dmg);
   await pUpd({bossAtk:{resp:{[id]:{ok,dmg}}},members:{[id]:{hp,...(!ok&&cur.members[id].charm?{charm:false}:{})}},...pLog(txt+(hp<=0?` · ${m.name}이(가) 쓰러졌다`:''),ok?'good':'bad',[ok?kind:dmg?'hit':'defend',id])});
   const c=charMap()[id];if(c&&dmg)saveHp(c,hp,true).catch(()=>{});await pAfterResp()}})}
-function pAct(a){const P=party,mm=pMine(P);if(!mm||P?.order?.[P.turn]!==mm[0])return;const [id,m]=mm,r=raids.find(x=>x.id===partyRid),bs=bossStats(r),step=P.step,c=charMap()[id];
+function pAct(a){if(pActing||pRoll)return;const P=party,mm=pMine(P);if(!mm||P?.order?.[P.turn]!==mm[0])return;const [id,m]=mm,r=raids.find(x=>x.id===partyRid),bs=bossStats(r),step=P.step,c=charMap()[id];
  const fin=async(patch,txt,cls,adv=true,fx=null)=>{await pUpd({...patch,...pLog(txt,cls,fx)});if(adv)await pAdvance(step);await pCheckEnd()};
  if(a==='attack'||a.startsWith('skill:')){let s=null,i=-1;if(a.startsWith('skill:')){i=+a.slice(6);s=(c?.skills||[])[i];if(!s||m.used?.[i])return}
   const used=i>=0?{members:{[id]:{used:{[i]:1}}}}:{};
@@ -1601,7 +1614,8 @@ function renderBattle(){const el=$('#battle');if(!el)return;const r=raids.find(x
   if(mm&&ms.length&&ms.every(([,m])=>m.ready)&&!pTimer)pTimer=setTimeout(()=>{pTimer=0;pStart()},400)}
  else if(st==='battle'){const actor=P.order[P.turn],B=P.bossAtk&&P.bossAtk.step===P.step?P.bossAtk:null,stale=now-(+P.turnAt||0)>PTIMEOUT,bhp=raidHp(r);
   let act='';
-  if(pRoll){const R=pRoll.result,nd=needOf(pRoll.dc,pRoll.mod);act=`<div class="dicebox"><div class="die${R?.roll===20?' crit':R?.roll===1?' fumble':''}" id="btdie">${R?R.roll:'?'}</div><div class="sp"><b>${esc(pRoll.label)}</b><div class="meta">${nd} 이상 성공</div>${R?`<div class="dres ${R.ok?'ok':'no'}">${R.ok?'성공!':'실패…'}</div>`:''}</div>${R?'':((autoRoll||autoOn())?'<span class="meta">자동으로 굴리는 중…</span>':'<button class="btn" data-p="roll">주사위 굴리기</button>')+(pRoll.rolling?'':'<button class="btn ghost small" data-p="back" title="행동 다시 고르기">뒤로</button>')}</div>`}
+  if(pActing&&!pRoll)act='<p class="meta">결과를 반영하는 중…</p>';
+  else if(pRoll){const R=pRoll.result,nd=needOf(pRoll.dc,pRoll.mod);act=`<div class="dicebox"><div class="die${R?.roll===20?' crit':R?.roll===1?' fumble':''}" id="btdie">${R?R.roll:'?'}</div><div class="sp"><b>${esc(pRoll.label)}</b><div class="meta">${nd} 이상 성공</div>${R?`<div class="dres ${R.ok?'ok':'no'}">${R.ok?'성공!':'실패…'}</div>`:''}</div>${R?'':((autoRoll||autoOn())?'<span class="meta">자동으로 굴리는 중…</span>':'<button class="btn" data-p="roll">주사위 굴리기</button>')+(pRoll.rolling?'':'<button class="btn ghost small" data-p="back" title="행동 다시 고르기">뒤로</button>')}</div>`}
   else if(actor==='boss'){if(!B){act=`<p class="meta">${esc(r.name)}이(가) 움직이려 한다…</p>`;if(mm&&ms[0]&&ms.find(([,m])=>alive(m))?.[1].owner===acct&&!pTimer)pTimer=setTimeout(()=>{pTimer=0;pBossAct()},700)}
    else{const meT=mm&&B.targets.includes(mm[0])&&!B.resp?.[mm[0]]&&alive(mm[1]);const bs=bossStats(r);
     act=meT?`<p><b>${B.area?'광범위 공격!':'내가 노려졌다!'}</b> 어떻게 막을까요?</p><div class="row"><button class="btn bevade" data-p="evade">회피 <span class="meta">(${needOf(8+bs.agi,half(mm[1].cb?.agi))} 이상 성공)</span></button><button class="btn bdefend" data-p="defend">방어 <span class="meta">(${needOf(6+bs.atk,half(mm[1].cb?.def)+2)} 이상 성공)</span></button></div>`
@@ -1697,17 +1711,39 @@ const trophyLeft=c=>inv(c).trophy||0;
 /* 토벌 증표 교환 */
 const TRADES=[{id:'reroll',name:'상점 새로고침',cost:1,desc:'상품을 새로 뽑아요'},{id:'pfull',name:'완전 치유의 물약',cost:2,desc:'체력 모두 회복'},{id:'stone',name:'성장석',cost:5,desc:'원하는 스탯 +1'},{id:'autobattle',name:'레이드 자동 전투',cost:10,desc:'레이드에서 알아서 싸워요 (한 번만)'}];
 const AUTOPRICE=500; /* 상점 고정 상품: 레이드 자동 전투 */
-function renderShop(){if(view()!=='shop')return;const c=myChar(),el=$('#shopbody');const nx=(shopSlot()+1)*SHOPSLOT-KST;$('#shopnext').textContent=`새 상품까지 ${left(nx-Date.now())}`;
+/* 상품 칸: 살 수 있으면 밝게, 못 사면 어둡게 */
+function stockHTML(c){const gold=prog(c).gold,stock=shopStock(c),can=canWrite;
+ return stock.length?`<div class="igrid">${stock.map((x,i)=>{const it=ITEMS[x.k],ok=can&&x.left>0&&gold>=x.price;return `<div class="icell ${ok?'can':'off'}"><div class="itop">${itemIcon(x.k)}<b>${esc(it.name)}</b><span class="n">남음 ${x.left}</span></div><span class="meta">${esc(it.desc)}</span>
+   <button class="btn small" data-buy="${i}" ${ok?'':'disabled'}>${x.left<=0?'품절':`${x.price}골드`}</button></div>`}).join('')}</div>`:'<p class="meta">상점에 나올 아이템이 없어요.</p>'}
+const shopNextText=()=>`새 상품까지 ${left((shopSlot()+1)*SHOPSLOT-KST-Date.now())}`;
+function renderShop(){renderShopWin();if(view()!=='shop')return;const c=myChar(),el=$('#shopbody');$('#shopnext').textContent=shopNextText();
  if(!c){el.innerHTML='<div class="empty">캐릭터를 만들면 이용할 수 있어요.</div>';return}
- const gold=prog(c).gold,stock=shopStock(c),tl=trophyLeft(c),can=canWrite;
+ const gold=prog(c).gold,tl=trophyLeft(c),can=canWrite,ab=inv(c).autobattle>0;
  el.innerHTML=`<div class="row" style="margin-bottom:12px">${av(c,'s')}<b>${esc(c.name)}</b><span class="sp"></span><span class="gold">골드 ${gold}</span><span class="meta">· 토벌 증표 ${tl}</span></div>
-  ${stock.length?`<div class="igrid">${stock.map((x,i)=>{const it=ITEMS[x.k];return `<div class="icell"><div class="itop">${itemIcon(x.k)}<b>${esc(it.name)}</b><span class="n">남음 ${x.left}</span></div><span class="meta">${esc(it.desc)}</span>
-   <button class="btn small" data-buy="${i}" ${!can||x.left<=0||gold<x.price?'disabled':''}>${x.left<=0?'품절':`${x.price}골드`}</button></div>`}).join('')}</div>`:'<p class="meta">상점에 나올 아이템이 없어요. 아이템 관리에서 「상점 판매」를 체크해 주세요.</p>'}
-  <div class="trow" style="margin-top:10px">${itemIcon('autobattle')}<b>레이드 자동 전투</b><span class="meta sp">고정 상품 · 한 번 사면 계속 써요</span><button class="btn small" data-fixed="autobattle" ${!can||inv(c).autobattle>0||gold<AUTOPRICE?'disabled':''}>${inv(c).autobattle>0?'보유 중':AUTOPRICE+'골드'}</button></div>
+  ${stockHTML(c)}
+  <div class="trow ${can&&!ab&&gold>=AUTOPRICE?'can':'off'}" style="margin-top:10px">${itemIcon('autobattle')}<b>레이드 자동 전투</b><span class="meta sp">고정 상품 · 한 번 사면 계속 써요</span><button class="btn small" data-fixed="autobattle" ${!can||ab||gold<AUTOPRICE?'disabled':''}>${ab?'보유 중':AUTOPRICE+'골드'}</button></div>
   <h3 style="margin:22px 0 8px">증표 교환소</h3><p class="note" style="margin:0 0 8px">레이드 토벌 증표로 교환해요. 보유 ${tl}개</p>
-  <div class="tlist">${TRADES.map(t=>`<div class="trow">${t.id==='reroll'?'<span class="ico">'+itemGlyph('sell')+'</span>':itemIcon(t.id)}<b>${esc(t.name)}</b><span class="meta sp">${esc(t.desc)}</span><button class="btn ghost small" data-trade="${t.id}" ${!can||tl<t.cost||(t.id==='autobattle'&&inv(c).autobattle>0)?'disabled':''}>${t.id==='autobattle'&&inv(c).autobattle>0?'보유 중':`증표 ${t.cost}개`}</button></div>`).join('')}</div>`}
+  <div class="tlist">${TRADES.map(t=>{const own=t.id==='autobattle'&&ab,ok=can&&tl>=t.cost&&!own;return `<div class="trow ${ok?'can':'off'}">${t.id==='reroll'?'<span class="ico">'+itemGlyph('sell')+'</span>':itemIcon(t.id)}<b>${esc(t.name)}</b><span class="meta sp">${esc(t.desc)}</span><button class="btn ghost small" data-trade="${t.id}" ${ok?'':'disabled'}>${own?'보유 중':`증표 ${t.cost}개`}</button></div>`}).join('')}</div>`}
+/* 간이 상점 창: 오른쪽 캐릭터 칸의 「상점」으로 어디서든 열어요. 12시간 상품 + 상품 새로고침만 */
+function renderShopWin(){const w=$('#shopwin');if(!w||w.hidden)return;const c=myChar();if(!c){w.hidden=true;return}
+ const tl=trophyLeft(c),ok=canWrite&&tl>=1;
+ $('#shopwhead').innerHTML=av(c,'s');$('#shopwbody').innerHTML=`<div class="row" style="margin-bottom:10px"><span class="gold">골드 ${prog(c).gold}</span><span class="meta sp">${shopNextText()}</span></div>${stockHTML(c)}
+  <div class="trow ${ok?'can':'off'}" style="margin-top:10px"><span class="ico">${itemGlyph('sell')}</span><b>상품 새로고침</b><span class="meta sp">토벌 증표 ${tl}개 보유</span><button class="btn ghost small" data-trade="reroll" ${ok?'':'disabled'}>증표 1개</button></div>
+  <p class="note" style="margin:10px 0 0">자동 전투·증표 교환은 <button class="ment" data-go="shop">상점 탭</button>에서</p>`}
+function openShopWin(){const w=$('#shopwin'),g=store('shopwin');w.hidden=false;
+ if(g)Object.assign(w.style,{left:g.x+'px',top:g.y+'px',width:g.w+'px',height:g.h+'px'});else{const W=Math.min(520,innerWidth-24),H=Math.min(520,innerHeight-40);Object.assign(w.style,{left:Math.max(12,innerWidth-W-340)+'px',top:'90px',width:W+'px',height:H+'px'})}
+ renderShopWin()}
+/* 끌어서 옮기기 · 크기 기억 (보관함과 같은 방식) */
+function makeFloat(w,hd,key){let d=null;const save=()=>{if(w.hidden)return;const r=w.getBoundingClientRect();store(key,{x:Math.round(r.left),y:Math.round(r.top),w:Math.round(r.width),h:Math.round(r.height)})};
+ hd.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;const r=w.getBoundingClientRect();d={x:e.clientX-r.left,y:e.clientY-r.top};hd.setPointerCapture(e.pointerId)});
+ hd.addEventListener('pointermove',e=>{if(!d)return;w.style.left=Math.min(Math.max(0,e.clientX-d.x),innerWidth-80)+'px';w.style.top=Math.min(Math.max(0,e.clientY-d.y),innerHeight-48)+'px'});
+ const end=()=>{if(d){d=null;save()}};hd.addEventListener('pointerup',end);hd.addEventListener('pointercancel',end);
+ new ResizeObserver(()=>{clearTimeout(w.t);w.t=setTimeout(save,300)}).observe(w)}
+makeFloat($('#shopwin'),$('#shopwhd'),'shopwin');
+$('#shopwx').addEventListener('click',()=>{$('#shopwin').hidden=true});
+document.addEventListener('click',e=>{if(e.target.closest('[data-shopwin]')){const w=$('#shopwin');w.hidden?openShopWin():(w.hidden=true)}});
 let shopBusy=false;
-$('#shopbody').addEventListener('click',async e=>{const c=myChar();if(!c||shopBusy||!canWrite)return;const b=e.target.closest('[data-buy],[data-trade],[data-fixed]');if(!b)return;shopBusy=true;b.disabled=true;
+async function shopClick(e){const c=myChar();if(!c||shopBusy||!canWrite)return;const b=e.target.closest('[data-buy],[data-trade],[data-fixed]');if(!b)return;shopBusy=true;b.disabled=true;
  try{const st=shopState(c);
   if(b.dataset.buy!==undefined){const i=+b.dataset.buy,x=shopStock(c)[i];if(!x||x.left<=0)throw{m:'품절이에요'};if(prog(c).gold<x.price)throw{m:'골드가 모자라요'};
    const bb=st.b.slice();while(bb.length<SHOPN)bb.push(0);bb[i]++;const got=c.itemsGot||{};
@@ -1716,7 +1752,8 @@ $('#shopbody').addEventListener('click',async e=>{const c=myChar();if(!c||shopBu
   else{const t=TRADES.find(x=>x.id===b.dataset.trade);if(!t||trophyLeft(c)<t.cost)throw{m:'증표가 모자라요'};if(t.id==='autobattle'&&inv(c).autobattle>0)throw{m:'이미 가지고 있어요'};const used=(+c.trophyUsed||0)+t.cost;
    if(t.id==='reroll')await patchChar(c,{trophyUsed:used,shop:{slot:st.slot,reroll:st.reroll+1,b:''}});
    else{const got=c.itemsGot||{};await patchChar(c,{trophyUsed:used,itemsGot:{[t.id]:(+got[t.id]||0)+1}})}toast(`${t.name} 교환`)}}
- catch(err){toast(err?.m||'처리하지 못했어요')}shopBusy=false;renderShop()});
+ catch(err){toast(err?.m||'처리하지 못했어요')}shopBusy=false;renderShop()}
+$('#shopbody').addEventListener('click',shopClick);$('#shopwbody').addEventListener('click',shopClick);
 /* 성장의 결정: 보관함에서 필요 개수만큼 써서 스탯 +1 (statBoost) */
 async function useCrystal(c,k,stat){const it=ITEMS[k],need=Math.max(1,+it?.power||5);if(!c||!STATN[stat]||inv(c)[k]<need)return toast(`${need}개가 필요해요`);
  try{const u=c.itemsUsed||{},sb=c.statBoost||{};await patchChar(c,{itemsUsed:{[k]:(+u[k]||0)+need},statBoost:{[stat]:(+sb[stat]||0)+1}});toast(`${STATN[stat]} +1`)}catch(e){toast('쓰지 못했어요')}}
@@ -1833,6 +1870,10 @@ $('#bkimp').addEventListener('change',async e=>{const f=e.target.files[0];e.targ
 $('#rlbtn').addEventListener('click',()=>{const d=$('#rldoc').value,u=$('#rluid').value.trim();if(!d||!u)return toast('캐릭터와 계정 코드를 넣어 주세요');relinkChar(d,u)});
 function renderRelink(){const box=$('#relink');if(!box)return;box.hidden=MODE!=='firebase';if(box.hidden)return;
  const docs=Object.keys(charDocs);$('#rldoc').innerHTML=docs.map(d=>{const r=charDocs[d],names=[r.name,...Object.values(r.alts||{}).map(a=>a?.name)].filter(Boolean);return `<option value="${esc(d)}">${esc(names.join(', ')||d)}</option>`}).join('')}
+/* 깜박임 방지: 내용이 그대로면 다시 그리지 않아요 (그림이 다시 불러와지며 번쩍이는 것과 fade 효과 반복을 막음) */
+{const d=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML');
+ for(const id of ['mine','cview','roster','shopbody','shopwbody','bagbody','autohunt','raidcards','online','sdots']){const el=document.getElementById(id);if(!el)continue;let last=null;
+  Object.defineProperty(el,'innerHTML',{configurable:true,get(){return d.get.call(this)},set(v){v=String(v);if(v===last&&this.childNodes.length)return;last=v;d.set.call(this,v)}})}}
 /* ---- 연결 ---- */
 route();renderAll();
 (async()=>{const st=$('#status');
