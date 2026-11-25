@@ -89,7 +89,7 @@ aside.mine{position:sticky;top:16px}
 .ritem .meta{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;max-height:280px;overflow:auto}
 .pick label{display:flex;gap:8px;align-items:center;margin:0;padding:6px 8px;border:1px solid var(--line);border-radius:6px;color:var(--ink);cursor:pointer}
-.pick input{width:auto}
+.pick input{width:auto;flex:none}.pick label{flex-wrap:wrap;align-content:start}
 /* 보관소 */
 .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:10px}
 .art{background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer;padding:0;color:inherit;font:inherit;text-align:left}
@@ -163,7 +163,9 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .battle{border:1px solid var(--line2);border-radius:10px;padding:16px;margin-top:20px;background:rgba(255,255,255,.02)}
 .btbars{display:grid;grid-template-columns:1fr 1fr;gap:18px;font-size:13.5px}
 .btlog{max-height:220px;overflow:auto;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:8px 0 12px;padding:6px 0}
-.btlog p{margin:4px 0;font-size:14px}.btlog .good{color:var(--ok)}.btlog .bad{color:var(--red)}
+.btlog p{margin:4px 0;font-size:14px;transition:font-size .2s}.btlog p:last-child{font-size:16px;font-weight:400}
+.btn.bevade{background:#3f9a62;border-color:#3f9a62;color:#fff}.btn.bdefend{background:#3f72c4;border-color:#3f72c4;color:#fff}
+.dres{font:500 18px 'Noto Serif KR';margin-top:2px}.dres.ok{color:var(--ok)}.dres.no{color:var(--red)}.btlog .good{color:var(--ok)}.btlog .bad{color:var(--red)}
 .items{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
 .btn .meta{color:inherit;opacity:.75}
 details>summary{cursor:pointer;font:500 17px "Noto Serif KR"}
@@ -222,6 +224,10 @@ dialog.cfm{max-width:min(440px,92vw)}
 @keyframes fxguard{0%,100%{box-shadow:none}40%{box-shadow:0 0 0 2px #6aa8ff,0 0 18px #6aa8ff88}}
 @keyframes fxwarn{0%,100%{box-shadow:none}30%,70%{box-shadow:0 0 0 2px #ffd27a,0 0 16px #ffd27a77}}
 @media(prefers-reduced-motion:reduce){.fx-hit,.fx-heal,.fx-guard,.fx-warn{animation:none}}
+.tipkv{position:relative}.tipkv .tip{display:none;position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:12;background:#14161d;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;text-align:left;font-size:12.5px;line-height:1.6;color:var(--ink);box-shadow:0 8px 24px #0009;pointer-events:none}
+.tipkv .tip b{display:inline;font-size:inherit}.tipkv .tip span{font-size:inherit;color:inherit}.tipkv .tip .gold{color:#ffd27a}.tipkv .tip .neg{color:var(--red)}.tipkv .cbdown>b{color:var(--red)}.tipkv .tip .meta{color:var(--dim);font-size:11.5px}.tipkv .tip>b:first-child{font-size:13.5px}.tipkv>div{cursor:help}.tipkv .cbup>b{color:#ffd27a}
+@media(hover:hover){.tipkv>div:hover>.tip,.tipkv>div:focus>.tip{display:block}}
+.bneg{color:var(--red)!important}.blow{color:#3fc9a8!important}.bhigh{color:#ffd27a!important}.tipkv .cb>b{color:inherit}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:20;display:none;padding:10px 16px}
 .lb img{display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:6px}
 .fade{animation:in .35s ease}@keyframes in{from{opacity:0;transform:translateY(4px)}}@media(prefers-reduced-motion:reduce){.fade{animation:none}}
@@ -239,6 +245,7 @@ dialog.cfm{max-width:min(440px,92vw)}
  <nav id="nav">
   <button class="tab" data-v="events">던전 이벤트</button>
   <button class="tab" data-v="party">파티 명부</button>
+  <button class="tab" data-v="shop">상점</button>
   <button class="tab" data-v="plaza">광장<span id="b-plaza"></span></button>
   <button class="tab" data-v="rooms">대화방<span id="b-rooms"></span></button>
   <button class="tab" data-v="items" id="tab-items" hidden>아이템 관리</button>
@@ -282,7 +289,7 @@ dialog.cfm{max-width:min(440px,92vw)}
   <div class="sp" style="min-width:220px">
    <label for="fname" style="margin-top:0">이름 (띄어쓰기 없이, 언급에 쓰여요)</label><input id="fname" maxlength="12" required>
    <label for="fcls">직업 · 역할 (자유롭게 적어요)</label><input id="fcls" maxlength="16" placeholder="예: 떠돌이 검사, 약초상, 견습 마법사">
-   <label for="ftsel">장착할 칭호</label><select id="ftsel"></select>
+   <label for="ftsel">장착할 칭호</label><select id="ftsel"></select><div id="ftselb" style="font-size:13px;margin-top:4px"></div>
    <label for="flook">외형 설명</label><textarea id="flook" rows="3" maxlength="300" placeholder="은빛 단발, 낡은 망토, 왼쪽 눈에 흉터…"></textarea>
   </div>
  </div>
@@ -293,7 +300,7 @@ dialog.cfm{max-width:min(440px,92vw)}
   <div class="row"><div style="width:140px"><label for="abonus">보너스 포인트</label><input id="abonus" type="number" min="0" max="50"></div></div>
   <label>보유 칭호 (체크해서 주거나 빼요)</label><div class="pick" id="aowned"></div>
   <div class="row"><div class="sp"><label for="aexp">경험치 보정</label><input id="aexp" type="number" step="10"></div><div class="sp"><label for="agold">골드 보정</label><input id="agold" type="number" step="10"></div></div>
-  <p class="note">관리자는 포인트 제한 없이 각 스탯을 바로 숫자로 적을 수 있어요. 스탯과 체력에는 최대 상한이 없어요.</p>
+  <p class="note">관리자는 스탯을 숫자로 바로 적어요. 상한 없음.</p>
   <h3 style="margin-top:14px">특수 스킬</h3><div class="sklist" id="askills"></div>
   <div class="row"><input id="skname" maxlength="16" placeholder="스킬 이름" class="sp" style="min-width:140px"><select id="sktype" style="width:auto"></select><input id="skpow" type="number" min="1" max="20" value="3" style="width:80px" aria-label="위력"></div>
   <div class="row" style="margin-top:6px"><input id="skdesc" maxlength="60" placeholder="설명 (선택)" class="sp"><button type="button" class="btn ghost small" id="skadd">스킬 추가</button></div>
@@ -340,6 +347,11 @@ dialog.cfm{max-width:min(440px,92vw)}
  <div id="raidview"></div>
 </section>
 
+<section class="panel" id="v-shop" hidden>
+ <div class="hd"><h2 class="sp">상점</h2><span class="meta" id="shopnext"></span></div>
+ <div id="shopbody"></div>
+</section>
+
 <section class="panel" id="v-party" hidden>
  <div class="hd"><h2 class="sp">파티 명부</h2></div>
  <div class="grid" id="roster"></div>
@@ -349,7 +361,7 @@ dialog.cfm{max-width:min(440px,92vw)}
 
 <section class="panel" id="v-items" hidden>
  <div class="hd"><h2 class="sp">아이템 관리</h2></div>
- <p class="note" style="margin-top:0">아이템을 새로 만들거나 기본 아이템의 이름·효과·가격을 고쳐요. 「탐색 드롭」에 체크한 아이템은 던전 관문을 성공했을 때 30% 확률로, 체크한 것들 중 하나가 똑같은 확률로 나와요. 판매 가격을 0으로 두면 팔 수 없어요.</p>
+ <p class="note" style="margin-top:0">새 아이템을 만들거나 기본 아이템을 고쳐요. 탐색 드롭: 관문 성공 시 30%. 상점 판매: 12시간마다 바뀌는 상점에 나와요. 판매 가격 0 = 팔 수 없음.</p>
  <form id="fitem" class="adm">
   <div class="row" style="align-items:end"><div class="sp" style="min-width:180px"><label for="iname" style="margin-top:0">이름</label><input id="iname" maxlength="24" required></div>
    <div><label for="ikind" style="margin-top:0">효과 종류</label><select id="ikind"></select></div>
@@ -357,34 +369,36 @@ dialog.cfm{max-width:min(440px,92vw)}
    <div style="width:120px"><label for="ival" style="margin-top:0">판매 가격 (골드)</label><input id="ival" type="number" min="0" value="10"></div></div>
   <label for="idesc">설명 (비우면 효과에 맞게 자동)</label><input id="idesc" maxlength="60">
   <label>이미지 <span class="meta">(정사각형으로 잘려 128 × 128 로 저장돼요)</span></label><div class="row"><span class="ico" id="iimgprev" style="width:48px;height:48px"></span><label class="btn ghost small" style="margin:0">이미지 선택<input type="file" id="iimg" accept="image/*" hidden></label><button type="button" class="btn ghost small" id="iimgdel" hidden>이미지 빼기</button><span class="meta" id="iimgn"></span></div>
-  <div class="row" style="margin-top:10px"><label class="row" style="margin:0;gap:6px;color:var(--ink)"><input type="checkbox" id="iexp" style="width:auto"> 탐색 드롭</label>
+  <div class="row" style="margin-top:10px"><label class="row" style="margin:0;gap:6px;color:var(--ink)"><input type="checkbox" id="iexp" style="width:auto"> 탐색 드롭</label><label class="row" style="margin:0;gap:6px;color:var(--ink)"><input type="checkbox" id="ishop" style="width:auto"> 상점 판매</label><label class="row" style="margin:0;gap:6px">상점 가격<input id="ibuy" type="number" min="1" style="width:90px" placeholder="자동"></label>
    <span class="sp"></span><button type="button" class="btn ghost" id="icancel" hidden>편집 취소</button><button class="btn" id="isave">아이템 추가</button></div>
  </form>
- <table class="stack" style="margin-top:12px"><thead><tr><th>아이템</th><th>효과</th><th>판매 가격</th><th>탐색 드롭</th><th></th></tr></thead><tbody id="aitems"></tbody></table>
+ <table class="stack" style="margin-top:12px"><thead><tr><th>아이템</th><th>효과</th><th>판매 가격</th><th>나오는 곳</th><th></th></tr></thead><tbody id="aitems"></tbody></table>
  <div class="sec" style="margin-top:24px"><h3>캐릭터에게 아이템 주기</h3>
-  <div class="row" style="margin-top:8px"><select id="gchar" class="sp" style="min-width:140px"></select><select id="gitem" class="sp" style="min-width:140px"></select><input id="gqty" type="number" min="1" value="1" style="width:80px" aria-label="개수"><button type="button" class="btn ghost" id="gbtn">주기</button></div></div>
+  <div class="row" style="margin-top:8px"><select id="gchar" class="sp" style="min-width:140px"></select><select id="gitem" class="sp" style="min-width:140px"></select><input id="gqty" type="number" value="1" style="width:80px" aria-label="개수"><button type="button" class="btn ghost" id="gbtn">주기</button></div><p class="note" id="ghave" style="margin:4px 0 0">음수를 적으면 빼요.</p></div>
 </section>
 
 <section class="panel" id="v-admin" hidden>
  <div class="hd"><h2 class="sp">관리</h2></div>
  <div class="sec"><h3>관리자 지정</h3>
-  <p class="note">이 페이지의 주인은 항상 관리자예요. 아래에서 체크한 사람만 게임 안의 관리자가 되고, 체크하려면 claude.ai 공유에서 그 사람이 <b>편집</b> 권한을 갖고 있어야 해요. 편집 권한이 있어도 체크하지 않으면 일반 플레이어처럼 보여요. 체크는 주인만 바꿀 수 있어요.</p>
+  <p class="note">주인은 항상 관리자예요. 체크한 사람만 관리자가 되고, claude.ai 에서는 그 사람에게 <b>편집</b> 권한이 있어야 해요. 체크는 주인만.</p>
   <div class="tlist" id="aadmins" style="margin-top:8px"></div></div>
  <div class="sec"><h3>이야기 저장소</h3>
-  <p class="note">던전 탐색 이야기는 여기 저장된 것을 돌려 써요. 저장된 이야기가 지역마다 6개보다 적으면 탐색할 때 Claude가 3개씩 묶어서 새로 만들어 저장하고, 그 뒤로는 아직 안 본 이야기를 꺼내 써요. Claude를 쓸 수 없는 손님은 저장된 이야기만 쓰니, 아래 버튼으로 미리 채워 두면 손님도 다양한 이야기를 볼 수 있어요. 버튼은 지금 보는 사람(주인)의 Claude 사용량을 써요.</p>
+  <p class="note">탐색 이야기는 여기 저장된 것을 돌려 써요. 지역마다 6개보다 적으면 3개씩 새로 만들어요. 버튼은 주인의 Claude 사용량을 써요.</p>
   <div class="tlist" id="astories" style="margin-top:8px"></div></div>
  <div class="sec"><h3>기록 내보내기 / 가져오기</h3>
-  <p class="note">캐릭터, 칭호, 아이템, 대화, 대화방, 레이드, 이야기 저장소, 설정을 그림까지 함께 한 파일(JSON)로 저장해요. 다른 곳(예: 내 홈페이지)에서 「가져오기」하면 그대로 옮겨져요. 각자만 보는 던전 탐색 기록은 빠져요.</p>
+  <p class="note">모든 공용 기록과 그림을 JSON 파일 하나로 저장·복원해요. 각자의 탐색 기록은 빠져요.</p>
   <div class="row" style="margin-top:8px"><button type="button" class="btn ghost" id="bkexp">기록 내보내기</button><label class="btn ghost" style="margin:0">기록 가져오기<input type="file" id="bkimp" accept=".json,application/json" hidden></label><span class="meta" id="bkstat"></span></div>
   <div id="relink" hidden style="margin-top:12px"><label style="margin-top:0">캐릭터 주인 연결 · 옮겨 온 캐릭터를 새 계정에 연결해요 (그 사람의 「계정 코드」를 받아 넣어요)</label>
    <div class="row"><select id="rldoc" class="sp" style="min-width:160px"></select><input id="rluid" placeholder="계정 코드" class="sp" style="min-width:160px"><button type="button" class="btn ghost" id="rlbtn">연결</button></div></div></div>
  <div class="sec"><h3>테스트 도구 <span class="meta">· 관리자만</span></h3>
   <div class="row" style="margin-top:8px"><select id="tboss" class="sp" style="min-width:200px"></select><button type="button" class="btn ghost" id="tspawn">레이드 보스 띄우기</button></div>
   <div class="row" style="margin-top:8px"><select id="txacct" class="sp" style="min-width:200px"></select><button type="button" class="btn ghost" id="txreset">이 계정의 던전 탐색 초기화</button></div>
-  <p class="note" style="margin:4px 0 0">고른 계정의 오늘 탐색과 끝내지 못한 탐색을 지워서, 바로 새로 탐색할 수 있게 해요. 그 사람이 다음에 화면을 열거나 이미 열려 있으면 곧바로 반영돼요.</p>
-  <div class="row" style="margin-top:8px"><button type="button" class="btn ghost" id="treset">오늘 던전 탐색 초기화 (내 계정)</button><button type="button" class="btn ghost" id="traid">오늘 레이드 참여 초기화 (내 캐릭터)</button><button type="button" class="btn ghost" id="theal">내 캐릭터 체력 모두 회복</button></div></div>
+  <div class="row" style="margin-top:8px"><select id="trchar" class="sp" style="min-width:200px"></select><button type="button" class="btn ghost" id="trreset">이 캐릭터의 오늘 레이드 참여 초기화</button></div>
+  <p class="note" style="margin:4px 0 0">오늘 레이드 참여만 지워요. 피해·보상은 남아요.</p>
+  <p class="note" style="margin:4px 0 0">오늘 탐색과 끝내지 못한 탐색을 지워요. 바로 다시 탐색할 수 있어요.</p>
+  <div class="row" style="margin-top:8px"><button type="button" class="btn ghost" id="theal">내 캐릭터 체력 모두 회복</button></div></div>
  <div class="sec"><h3>칭호 관리</h3>
-  <p class="note">칭호마다 글자색·배경색과 보너스 스탯을 정해요. 같은 칭호는 누가 달아도 같은 색으로 보여요. 보너스는 비우면 없고, 음수(-)도 적을 수 있어요. 캐릭터에게 칭호를 주려면 캐릭터 관리에서 「보유 칭호」를 체크해요.</p>
+  <p class="note">색과 보너스 스탯을 정해요. 비우면 0, 음수도 가능.</p>
   <form id="ftform" class="adm" style="margin-top:8px">
    <div class="row" style="align-items:end"><div class="sp" style="min-width:180px"><label for="tname" style="margin-top:0">칭호 이름</label><input id="tname" maxlength="20" required></div>
     <div><label for="tcolh" style="margin-top:0">글자 색</label><div class="hexpick"><input type="color" id="tcol" value="#1b1400" aria-label="글자 색 고르기"><input id="tcolh" value="#1b1400" maxlength="7" spellcheck="false" placeholder="#000000"></div></div><div><label for="tbgh" style="margin-top:0">배경 색</label><div class="hexpick"><input type="color" id="tbg" value="#f5c542" aria-label="배경 색 고르기"><input id="tbgh" value="#f5c542" maxlength="7" spellcheck="false" placeholder="#000000"></div></div>
@@ -400,10 +414,10 @@ dialog.cfm{max-width:min(440px,92vw)}
   </form>
   <table class="stack" style="margin-top:10px"><thead><tr><th>칭호</th><th>보너스</th><th>레이드 보상</th><th></th></tr></thead><tbody id="atitles"></tbody></table></div>
  <div class="sec"><h3>레이드 보스</h3>
-  <p class="note">보스마다 그림을 바꾸고, 토벌했을 때 나올 칭호를 고를 수 있어요(참여자마다 1%). 칭호를 하나도 고르지 않은 보스는 칭호 관리에서 「레이드 토벌 보상으로 나옴」에 체크한 칭호가 나와요.</p>
+  <p class="note">보스 그림과 토벌 칭호(참여자마다 1%)를 정해요. 고르지 않으면 「레이드 토벌 보상」 칭호가 나와요.</p>
   <div id="abosses" class="tlist" style="margin-top:8px"></div></div>
  <div class="sec"><h3>홈 슬라이드 · 진행 중인 큰 이벤트</h3>
-  <p class="note">홈 화면 맨 위에 가로로 넘겨 보는 슬라이드예요. 등록된 슬라이드가 없으면 최근 던전 이벤트 3개가 대신 보여요. 이미지는 가로로 긴 사진(16:6 정도)이 잘 맞아요.</p>
+  <p class="note">홈 맨 위 슬라이드예요. 없으면 최근 이벤트가 보여요. 가로로 긴 이미지(16:6)가 잘 맞아요.</p>
   <form id="fban" class="adm" style="margin-top:8px">
    <div class="row"><div class="sp"><label for="bt" style="margin-top:0">제목</label><input id="bt" maxlength="40" required></div><div style="width:180px"><label for="bl" style="margin-top:0">누르면 이동할 곳</label><select id="bl"><option value="">이동 없음</option><option value="events">던전 이벤트</option><option value="party">파티 명부</option><option value="plaza">광장</option><option value="rooms">대화방</option></select></div></div>
    <label for="bx">설명</label><textarea id="bx" rows="2" maxlength="200"></textarea>
@@ -411,19 +425,19 @@ dialog.cfm{max-width:min(440px,92vw)}
   </form>
   <table class="stack" style="margin-top:10px"><thead><tr><th>슬라이드</th><th>이동</th><th>상태</th><th></th></tr></thead><tbody id="abans"></tbody></table></div>
  <div class="sec"><h3>저장 공간</h3>
-  <p class="note">대화·캐릭터·이벤트 같은 기록은 이 페이지 전체에서 최대 25,000건까지 저장돼요 (대화 한 줄이 1건). 그림은 한 장에 20메가바이트까지 올릴 수 있어요.</p>
+  <p class="note">기록은 최대 25,000건(대화 한 줄 = 1건), 그림은 한 장 20MB까지.</p>
   <div id="usage" class="meta">사용량을 확인하는 중…</div><button class="btn ghost small" id="usagebtn" style="margin-top:8px">다시 확인</button></div>
  <div class="sec"><h3>배경 이미지</h3>
   <div class="row" style="margin-top:8px"><label class="btn ghost small" style="margin:0">이미지 선택<input type="file" id="abg" accept="image/*" hidden></label><button class="btn ghost small warn" id="abgdel">배경 지우기</button><span class="meta" id="abgn"></span></div>
   <label for="adim">어둡게 덮기 <span id="adimv"></span></label><input type="range" id="adim" min="0.2" max="0.95" step="0.05"></div>
  <div class="sec"><h3>레이드 효과음</h3>
-  <p class="note">▶ 를 눌러 들어 보고, 마음에 드는 번호의 「선택」을 누르면 모두에게 그 소리가 나요. 시안이 하나뿐인 소리는 정해 둔 것을 써요.</p><div id="asfx"></div></div>
+  <p class="note">▶ 듣기 · 「선택」하면 모두에게 적용돼요.</p><div id="asfx"></div></div>
  <div class="sec"><h3>배경 음악</h3>
-  <p class="note">m4a · mp4 · webm 형식의 음악 파일을 올릴 수 있어요 (20메가바이트 이하). mp3 형식은 올릴 수 없으니 m4a로 바꿔서 올려 주세요. 플레이어는 상단의 음악 켜기 버튼으로 들어요.</p>
+  <p class="note">m4a · mp4 · webm, 20MB 이하 (mp3 불가). 상단 「음악 켜기」로 들어요.</p>
   <div class="row"><label class="btn ghost small" style="margin:0">음악 선택<input type="file" id="abgm" accept=".m4a,.mp4,.webm,.weba,audio/mp4,audio/webm,video/mp4,video/webm" hidden></label><button class="btn ghost small warn" id="abgmdel">음악 지우기</button><span class="meta" id="abgmn"></span></div></div>
- <div class="sec"><h3>캐릭터 관리</h3><p class="note">스탯·칭호·보너스 포인트 지급, 경험치·골드 보정, 잘못된 캐릭터 삭제를 할 수 있어요.</p>
+ <div class="sec"><h3>캐릭터 관리</h3><p class="note">스탯·칭호·보너스·경험치·골드 보정, 삭제.</p>
   <table class="stack"><thead><tr><th>캐릭터</th><th>칭호</th><th>레벨</th><th>스탯 합</th><th></th></tr></thead><tbody id="achars"></tbody></table></div>
- <div class="sec"><h3>오류 수정</h3><p class="note">관리자에게는 광장·대화방 메시지, 그림, 던전 이벤트마다 지우기 버튼이 보여요. 잘못 생성된 이벤트는 이벤트 탭에서 지우면 그 보상도 함께 사라져요.</p></div>
+ <div class="sec"><h3>오류 수정</h3><p class="note">관리자에게는 메시지·그림·이벤트마다 지우기 버튼이 보여요.</p></div>
 </section>
 </main>
 
@@ -433,11 +447,11 @@ dialog.cfm{max-width:min(440px,92vw)}
 
 <dialog id="dcrop"><form class="panel" id="fcrop" method="dialog">
  <h2>두상 이미지 편집</h2>
- <p class="note" style="margin-top:4px">끌어서 위치를 옮기고, 막대나 마우스 휠로 확대해요. 둥근 선 안쪽이 대화·명부의 작은 아이콘에 보이는 부분이에요.</p>
+ <p class="note" style="margin-top:4px">끌어서 옮기고, 막대나 휠로 확대해요. 둥근 선 안이 아이콘에 보여요.</p>
  <div class="cropwrap"><canvas id="crop" width="320" height="320" tabindex="0" aria-label="자를 영역. 끌거나 방향키로 옮겨요"></canvas>
   <div><div class="meta">미리 보기</div><div class="row" style="align-items:end;margin-top:6px"><canvas id="cp120" width="120" height="120" class="cprev"></canvas></div>
    <label for="czoom">확대</label><input type="range" id="czoom" min="1" max="5" step="0.01" value="1">
-   <p class="note">두상은 120 × 120 크기로 저장돼요. 위의 미리 보기가 실제 크기예요.</p></div></div>
+   <p class="note">120 × 120 으로 저장돼요.</p></div></div>
  <div class="row" style="margin-top:14px"><span class="sp"></span><button class="btn ghost" value="cancel" formnovalidate>취소</button><button class="btn" value="ok">적용</button></div>
 </form></dialog>
 
@@ -459,7 +473,7 @@ dialog.cfm{max-width:min(440px,92vw)}
  <h2 id="rdtitle">새 대화방</h2>
  <div id="rdname"><label for="rnamein">방 이름</label><input id="rnamein" maxlength="24" placeholder="예: 늪지 탐사대 작전회의"></div>
  <label>초대할 캐릭터</label><div class="pick" id="rpick"></div>
- <p class="note">초대된 캐릭터에게만 이 방이 목록에 보여요. 방 안의 그림은 그림 보관소에 올라가지 않아요.</p>
+ <p class="note">초대된 캐릭터에게만 보여요.</p>
  <div class="row"><span class="sp"></span><button class="btn ghost" value="cancel" formnovalidate>닫기</button><button class="btn" value="ok">확인</button></div>
 </form></dialog>
 
@@ -480,6 +494,8 @@ dialog.cfm{max-width:min(440px,92vw)}
    stories/<id> : 여럿이 돌려 쓰는 탐색 이야기 ({이름} 자리에 캐릭터 이름) · 탐색 기록의 storyId
    items/<키> : 아이템 (기본 아이템은 덮어쓰기, 새 키는 새 아이템) · config/admins {ids} : 게임 안 관리자 계정
    raids/<id> (boss, dkey, participants, debuffs), raids/<id>/log/<id> : 보스 레이드 · config/bosses {imgs, drops} : 보스별 그림·칭호
+   chars 의 autoRaid(레이드 자동 전투 켜짐) · 레이드 성장의 결정은 저장 없이 raids 에서 계산(crystalFor)
+   chars 의 spentGold(상점에서 쓴 골드), shop{slot,reroll,b}, trophyUsed(교환에 쓴 증표 수), statBoost{str..}(성장의 결정)
    chars 의 bag[{id,n,t,v,d}], soldGold : 판매용 전리품 가방, 판매로 번 골드 · 탐색 기록의 dkey : 던전 종류
    아르바이트은 저장 없이 created 와 6시간 단위로 계산 (공식을 바꾸면 과거 보상이 달라지니 주의)
    art/<id>, banners/<id>, config/site : 그림 보관소, 홈 슬라이드, 배경
@@ -591,7 +607,7 @@ fold=store('fold')??(innerWidth<900);
 /* ---- 진행치는 이벤트 기록 + 관리자 보정에서 계산 ---- */
 function prog(c){const id=c?.id;let exp=+c?.expAdj||0,gold=+c?.goldAdj||0,loot=[],runs=0;
  for(const e of events)for(const r of e.results||[])if(r.id===id){exp+=+r.exp||0;gold+=+r.gold||0;runs++;if(r.loot)loot.push(String(r.loot))}
- const e=c?.earn||{};exp+=+e.exp||0;gold+=(+e.gold||0)+(+c?.soldGold||0);runs+=+e.runs||0;if(Array.isArray(e.loot))loot.push(...e.loot.map(String));
+ const e=c?.earn||{};exp+=+e.exp||0;gold+=(+e.gold||0)+(+c?.soldGold||0)-(+c?.spentGold||0);runs+=+e.runs||0;if(Array.isArray(e.loot))loot.push(...e.loot.map(String));
  for(const h of hunts(c)){exp+=h.exp;gold+=h.gold}
  for(const r of raids)if(r.status==='cleared'&&+r.participants?.[id]?.count>0){exp+=RAIDREW.exp;gold+=RAIDREW.gold;loot.push(r.name+' 토벌 증표')}
  exp=Math.max(0,exp);const lv=1+Math.floor(exp/100);return{exp,gold,loot,runs,lv,into:exp%100,title:titleObj(c?.titleId)?.name||c?.title||TITLES.find(t=>lv>=t[0])[1]}}
@@ -601,25 +617,37 @@ function av(c,size=''){const col=clsColor(c?.cls);return `<span class="av ${size
 let titles=[];const TITLE_DROP=.01,HEX=/^#[0-9a-fA-F]{6}$/;
 const titleObj=id=>id?titles.find(t=>t.id===id):null;
 function dropFor(r,uid){if(r?.status!=='cleared'||!(+r.participants?.[uid]?.count>0)||!Array.isArray(r.dropPool)||!r.dropPool.length)return null;const g=rng('title#'+r.id+'#'+uid);return g()<TITLE_DROP?r.dropPool[Math.floor(g()*r.dropPool.length)]:null}
-function ownedTitles(c){if(!c)return[];const o=new Set(Array.isArray(c.ownedTitles)?c.ownedTitles:[]),rv=Array.isArray(c.revokedTitles)?c.revokedTitles:[];for(const r of raids){const t=dropFor(r,c.id);if(t&&!rv.includes(t))o.add(t)}if(c.titleId)o.add(c.titleId);return [...o].filter(titleObj)}
+function ownedTitles(c){if(!c)return[];const o=new Set(Array.isArray(c.ownedTitles)?c.ownedTitles:[]),rv=Array.isArray(c.revokedTitles)?c.revokedTitles:[];if(!rv.includes('egg-deadline')&&hunts(c).some(h=>h.egg))o.add('egg-deadline');for(const r of raids){const t=dropFor(r,c.id);if(t&&!rv.includes(t))o.add(t)}if(c.titleId)o.add(c.titleId);return [...o].filter(titleObj)}
 function curTitle(c){const t=titleObj(c?.titleId);if(t)return t;if(c?.title)return{name:c.title};const lv=prog(c).lv;return{name:TITLES.find(x=>lv>=x[0])[1]}}
 /* 보너스: 장착한 칭호(패시브 아님) + 보유한 모든 패시브 칭호. 최종 스탯은 0~100 */
 function bonusParts(c){const eq={},pas={},e=titleObj(c?.titleId);if(e&&!e.passive)for(const k in e.bonus||{})eq[k]=+e.bonus[k]||0;
  for(const id of ownedTitles(c)){const t=titleObj(id);if(t?.passive)for(const k in t.bonus||{})pas[k]=(pas[k]||0)+(+t.bonus[k]||0)}return{eq,pas}}
 const tBonus=c=>{const {eq,pas}=bonusParts(c),o={};for(const [k] of STATS)o[k]=(eq[k]||0)+(pas[k]||0);return o};
-function effStats(c){const {eq,pas}=bonusParts(c),o={};for(const [k] of STATS)o[k]=Math.max(0,Math.min(STATCAP,(+c?.stats?.[k]||0)+(eq[k]||0)+(pas[k]||0)));return o}
+function effStats(c){const {eq,pas}=bonusParts(c),o={};for(const [k] of STATS)o[k]=Math.max(0,Math.min(STATCAP,(+c?.stats?.[k]||0)+(+c?.statBoost?.[k]||0)+(eq[k]||0)+(pas[k]||0)));return o}
 const chipOf=t=>HEX.test(t?.color||'')&&HEX.test(t?.bg||'')?`<span class="tchip" style="color:${t.color};background:${t.bg}">${esc(t.name)}</span>`:`<span class="title">${esc(t?.name||'')}</span>`;
 const titleChip=c=>chipOf(curTitle(c));
 const bonusText=b=>STATS.filter(([k])=>+b?.[k]).map(([k,n])=>`${n} ${+b[k]>0?'+':''}${+b[k]}`).join(' · ');
 const sgn=v=>(v>0?'+':'')+v;
-const statBars=c=>{const {eq,pas}=bonusParts(c),e=effStats(c),tot=STATS.reduce((s,[k])=>s+e[k],0);return STATS.map(([k,n])=>{const base=+c?.stats?.[k]||0,a=eq[k]||0,p=pas[k]||0;return `<div class="bar"><span>${n}</span><i><b style="width:${pct(e[k],tot)}%"></b></i><span>${base}${a?`<em class="${a>0?'up':'down'}">${sgn(a)}</em>`:''}${p?`<em class="pas${p<0?' down':''}">[패시브] ${sgn(p)}</em>`:''}</span></div>`}).join('')};
+/* 칭호의 전투 능력치 보너스 cbonus{agi,atk,def,heal} (스탯 bonus 와 별개) */
+const CBN={agi:'민첩',atk:'공격력',def:'방어력',heal:'회복력'};
+const cbText=b=>Object.keys(CBN).filter(k=>+b?.[k]).map(k=>`${CBN[k]} ${sgn(+b[k])}`).join(' · ');
+const tbText=t=>[bonusText(t?.bonus),cbText(t?.cbonus)].filter(Boolean).join(' · ');
+/* 칭호 보너스 색: 음수 빨강 · +1~10 청록 · +11 이상 금색 */
+const bcls=n=>n<0?'bneg':n<=10?'blow':'bhigh';
+const bv=n=>`<span class="${bcls(n)}">${sgn(n)}</span>`;
+const tbHTML=t=>[...STATS.filter(([k])=>+t?.bonus?.[k]).map(([k,n])=>`${n} ${bv(+t.bonus[k])}`),...Object.keys(CBN).filter(k=>+t?.cbonus?.[k]).map(k=>`${CBN[k]} ${bv(+t.cbonus[k])}`)].join(' · ');
+function cBonus(c){const o={agi:0,atk:0,def:0,heal:0},add=t=>{for(const k in o)o[k]+=+t?.cbonus?.[k]||0};const e=titleObj(c?.titleId);if(e&&!e.passive)add(e);for(const id of ownedTitles(c)){const t=titleObj(id);if(t?.passive)add(t)}return o}
+/* 기본 칭호: 아르바이트 이스터에그로 얻어요 (관리 탭에서 고치면 그 내용이 우선) */
+const BUILTIN_TITLES=[{id:'egg-deadline',name:'마감에 시달리는',color:'#ff5c8a',bg:'#3a0f1e',bonus:{},cbonus:{agi:-1,heal:-1,atk:3,def:3},drop:false,passive:false,ts:1,builtin:true}];
+const withBuiltin=list=>{const ids=new Set(list.map(t=>t.id));return [...list.map(t=>{const b=BUILTIN_TITLES.find(x=>x.id===t.id);return b?{...b,...t,builtin:true}:t}),...BUILTIN_TITLES.filter(b=>!ids.has(b.id))]};
+const statBars=c=>{const {eq,pas}=bonusParts(c),e=effStats(c),tot=STATS.reduce((s,[k])=>s+e[k],0);return STATS.map(([k,n])=>{const base=(+c?.stats?.[k]||0)+(+c?.statBoost?.[k]||0),a=eq[k]||0,p=pas[k]||0;return `<div class="bar"><span>${n}</span><i><b style="width:${pct(e[k],tot)}%"></b></i><span>${base}${a?`<em class="${bcls(a)}">${sgn(a)}</em>`:''}${p?`<em class="pas">[패시브] <span class="${bcls(p)}">${sgn(p)}</span></em>`:''}</span></div>`}).join('')};
 function mentionsIn(t){const names=Object.fromEntries(chars.map(c=>[c.name,c.id]));return [...new Set([...String(t).matchAll(/@([^\s@]+)/g)].map(m=>names[m[1]]).filter(Boolean))]}
 function richText(t){const names=Object.fromEntries(chars.map(c=>[c.name,c.id]));
  return esc(t).replace(/@([^\s@&<>"']+)/g,(m,n)=>names[n]?`<button class="ment" data-c="${esc(names[n])}">@${n}</button>`:m).replace(/\n/g,'<br>')}
 
 /* ---- 화면 전환 ---- */
-const VIEWS=['home','events','party','plaza','rooms','char','raid','items','admin'];
-const WHERE={home:'홈',events:'던전 이벤트',party:'파티 명부',plaza:'광장',rooms:'대화방',char:'캐릭터 정보',raid:'보스 레이드',items:'아이템 관리',admin:'관리'};
+const VIEWS=['home','events','party','shop','plaza','rooms','char','raid','items','admin'];
+const WHERE={shop:'상점',home:'홈',events:'던전 이벤트',party:'파티 명부',plaza:'광장',rooms:'대화방',char:'캐릭터 정보',raid:'보스 레이드',items:'아이템 관리',admin:'관리'};
 function view(){const v=location.hash.slice(1);return VIEWS.includes(v)&&((v!=='admin'&&v!=='items')||isAdmin)?v:'home'}
 function go(v){if(location.hash.slice(1)===v)route();else location.hash=v;scrollTo({top:0})}
 function goChar(id,edit){charView=id;editing=!!edit;go('char');if(edit)openEdit(id);else renderChar()}
@@ -627,7 +655,7 @@ function route(){const v=view();for(const x of VIEWS)$('#v-'+x).hidden=x!==v;
  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-current',b.dataset.v===v));
  if(v==='char'){if(!charView)charView=me;renderChar()}
  if(v==='home')renderHome();
- if(v==='raid')renderRaid();if(v==='items')renderItemsAdmin();if(v==='events'){renderExplore();renderHunt();renderRaidCards()}
+ if(v==='raid')renderRaid();if(v==='shop')renderShop();if(v==='items')renderItemsAdmin();if(v==='events'){renderExplore();renderHunt();renderRaidCards()}
  room?.presence({at:v}).catch(()=>{});
  if(v==='plaza'){store('seen',Date.now());const l=$('#plog');l.scrollTop=l.scrollHeight}
  if(v==='rooms'&&activeRoom)markRoom(activeRoom);renderBadges()}
@@ -639,13 +667,13 @@ function renderMine(){const c=myChar(),el=$('#mine'),list=myChars();$('.layout')
  const tog=`<button class="tog" id="tog" aria-label="${fold?'내 캐릭터 펼치기':'내 캐릭터 숨기기'}" aria-expanded="${!fold}">${fold?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 5l-7 7 7 7"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 5l7 7-7 7"/></svg>'}</button>`;
  const heads=`<div class="heads">${list.map(x=>`<button class="hbtn ${x.id===me?'on':''}" data-act="${esc(x.id)}" aria-label="${esc(x.name)}${x.id===me?' (활동 중)':' 으로 바꾸기'}" title="${esc(x.name)}">${av(x)}${fold?`<span>${esc(x.name)}</span>`:''}</button>`).join('')}${acct&&canWrite&&list.length<MAXCHARS?`<button class="hbtn add" data-edit="new" aria-label="새 캐릭터 만들기" title="새 캐릭터 만들기"><span class="av">+</span>${fold?'<span>추가</span>':''}</button>`:''}</div>`;
  if(fold){el.innerHTML=tog+heads;return}
- if(!c){el.innerHTML=`<div class="row" style="margin-bottom:8px"><h3 class="sp">내 캐릭터</h3>${tog}</div><p class="note">아직 길드에 등록하지 않았어요. 캐릭터를 만들면 대화하고 원정에 나갈 수 있어요. 한 계정에 ${MAXCHARS}개까지 만들 수 있어요.</p><button class="btn" data-edit="new" ${acct&&canWrite?'':'disabled'}>캐릭터 등록</button>${MODE==='firebase'&&acct?`<p class="meta" style="margin-top:12px;overflow-wrap:anywhere">계정 코드 · ${esc(acct)}<br>예전 캐릭터를 옮겨 왔다면 이 코드를 관리자에게 알려 주세요.</p>`:''}`;return}
+ if(!c){el.innerHTML=`<div class="row" style="margin-bottom:8px"><h3 class="sp">내 캐릭터</h3>${tog}</div><p class="note">캐릭터를 만들면 대화하고 모험할 수 있어요. 계정당 ${MAXCHARS}개.</p><button class="btn" data-edit="new" ${acct&&canWrite?'':'disabled'}>캐릭터 등록</button>${MODE==='firebase'&&acct?`<p class="meta" style="margin-top:12px;overflow-wrap:anywhere">계정 코드 · ${esc(acct)}<br>예전 캐릭터를 옮겨 왔다면 이 코드를 관리자에게 알려 주세요.</p>`:''}`;return}
  const p=prog(c),col=clsColor(c.cls);
  el.innerHTML=`<div class="row" style="margin-bottom:10px"><span class="meta sp">활동 중인 캐릭터 · ${list.length} / ${MAXCHARS}</span>${tog}</div>${heads}<div class="wrapme fade"><div class="head" style="background:${col}">${face(c)?`<img alt="" src="${esc(blob(face(c)))}">`:esc(c.name[0])}</div>
   <div><div>${titleChip(c)}</div><h2>${esc(c.name)}</h2><div class="meta"><span class="lv">레벨 ${p.lv}</span> · ${esc(c.cls)}</div></div>
   <div><div class="xp"><b style="width:${p.into}%"></b></div><div class="meta">경험치 ${p.into} / 100</div></div>
   <div class="stats">${(()=>{const b=combat(c),h=hpState(c);return `<div class="row" style="font-size:13.5px"><span class="sp">체력</span><span>${h.cur} / ${h.max}</span></div><div class="xp" style="height:5px;margin:4px 0"><b style="width:${h.cur/h.max*100}%;background:${hpCol(h.cur,h.max)}"></b></div><div class="meta">${hpLine(c)}</div>
-   <div class="kv" style="grid-template-columns:repeat(4,1fr);margin:10px 0 0"><div><b>${b.agi}</b><span>민첩</span></div><div><b>${b.atk}</b><span>공격력</span></div><div><b>${b.def}</b><span>방어력</span></div><div><b>${b.heal}</b><span>회복력</span></div></div>`})()}</div>
+   <div class="kv tipkv" style="grid-template-columns:repeat(4,1fr);margin:10px 0 0">${cbCell(c,b,'agi')}${cbCell(c,b,'atk')}${cbCell(c,b,'def')}${cbCell(c,b,'heal')}</div>`})()}</div>
   <div class="kv"><div><b>${p.gold}</b><span>골드</span></div><div><b>${p.runs}</b><span>원정</span></div><button class="kvbtn" data-bag="${esc(c.id)}" aria-label="보관함 열기"><b>${bagCount(c)}</b><span>보관함</span></button></div></div>
   <button class="btn ghost small" style="width:100%" data-c="${esc(c.id)}">내 캐릭터 편집</button>${MODE==='firebase'?`<p class="meta" style="margin:10px 0 0;overflow-wrap:anywhere">계정 코드 · ${esc(acct)}</p>`:''}`}
 $('#mine').addEventListener('click',e=>{if(e.target.closest('#tog')){fold=!fold;store('fold',fold);renderMine()}});
@@ -754,7 +782,7 @@ $('#ftform').addEventListener('submit',async e=>{e.preventDefault();const name=$
  try{const old=titleObj(editTitle)||{};const {id,...keep}=old;await (editTitle?db.doc('titles/'+editTitle):db.collection('titles').doc()).set({...keep,name,color,bg,bonus,drop:$('#tdrop').checked,passive:$('#tpas').checked,ts:old.ts||Date.now(),updated:Date.now()});
   toast(editTitle?'칭호를 고쳤어요':'칭호를 만들었어요');if(!editTitle)resetTitleForm()}catch(err){toast('칭호를 저장하지 못했어요')}});
 function renderTitles(){if(!isAdmin)return;
- $('#atitles').innerHTML=titles.length?titles.map(t=>{return `<tr><td>${chipOf(t)}</td><td>${t.passive?'<span class="pastag">[패시브]</span> ':''}${esc(bonusText(t.bonus)||'없음')}</td><td>${t.drop?'나옴':'안 나옴'}</td><td><div class="row" style="gap:4px"><button class="btn ghost small" data-tedit="${esc(t.id)}">수정</button><button class="btn ghost small warn" data-del="titles/${esc(t.id)}">삭제</button></div></td></tr>`}).join(''):'<tr><td colspan="4" class="meta">아직 만든 칭호가 없어요.</td></tr>';renderHolders()}
+ $('#atitles').innerHTML=titles.length?titles.map(t=>{return `<tr><td>${chipOf(t)}</td><td>${t.passive?'<span class="pastag">[패시브]</span> ':''}${tbHTML(t)||'<span class="meta">없음</span>'}</td><td>${t.drop?'나옴':'안 나옴'}</td><td><div class="row" style="gap:4px"><button class="btn ghost small" data-tedit="${esc(t.id)}">수정</button>${t.builtin?'<span class="meta">기본</span>':`<button class="btn ghost small warn" data-del="titles/${esc(t.id)}">삭제</button>`}</div></td></tr>`}).join(''):'<tr><td colspan="4" class="meta">아직 만든 칭호가 없어요.</td></tr>';renderHolders()}
 $('#atitles').addEventListener('click',e=>{const b=e.target.closest('[data-tedit]');if(!b)return;const t=titleObj(b.dataset.tedit);if(!t)return;
  editTitle=t.id;$('#tname').value=t.name;setColor('col',HEX.test(t.color)?t.color:'#1b1400');setColor('bg',HEX.test(t.bg)?t.bg:'#f5c542');
  for(const [k] of STATS)$('#tb-'+k).value=+t.bonus?.[k]||'';$('#tdrop').checked=!!t.drop;$('#tpas').checked=!!t.passive;$('#tsave').textContent='칭호 고치기';$('#tcancel').hidden=false;tprev();renderHolders();$('#ftform').scrollIntoView({block:'center'})});
@@ -810,11 +838,11 @@ function renderEvents(){const m=charMap(),l=$('#evlist');$('#oldev').hidden=!eve
 function renderRoster(){const r=$('#roster');
  r.innerHTML=chars.length?chars.map(c=>{const p=prog(c);return `<button class="card" data-c="${esc(c.id)}"><div class="pf">${av(c)}<div><div>${titleChip(c)}</div><h3>${esc(c.name)}${mine(c.id)?' <span class="meta">(내 캐릭터)</span>':''}</h3><div class="meta"><span class="lv">레벨 ${p.lv}</span> · ${esc(c.cls)} · 원정 ${p.runs}회</div></div></div>${statBars(c)}</button>`}).join(''):'<div class="empty">아직 등록된 모험가가 없어요.</div>'}
 function renderGallery(){}
-function renderAdmin(){if(!isAdmin)return;renderSfxAdmin();renderRelink();renderTxAcct();renderStoryAdmin();renderItemsAdmin();renderAdminList();renderBossAdmin();renderBanners();renderTitles();
+function renderAdmin(){if(!isAdmin)return;renderTrChar();renderSfxAdmin();renderRelink();renderTxAcct();renderStoryAdmin();renderItemsAdmin();renderAdminList();renderBossAdmin();renderBanners();renderTitles();
  $('#achars').innerHTML=chars.map(c=>{const p=prog(c);return `<tr><td>${esc(c.name)} <span class="meta">${esc(c.cls)}</span></td><td>${titleChip(c)}</td><td>${p.lv}</td><td>${STATS.reduce((s,[k])=>s+(+c.stats?.[k]||0),0)} / ${POOL+(+c.bonus||0)}</td><td><button class="btn ghost small" data-edit="${esc(c.id)}">관리</button></td></tr>`}).join('')||'<tr><td colspan="5" class="meta">캐릭터가 없어요.</td></tr>';
  $('#abgn').textContent=cfg.bg?'배경 이미지 사용 중':'배경 없음';$('#abgmn').textContent=cfg.bgm?'음악 사용 중':'음악 없음';
  $('#adim').value=cfg.dim??.72;$('#adimv').textContent=Math.round((cfg.dim??.72)*100)+'%'}
-function renderAll(){renderBag();renderHome();renderChar();renderMine();renderExplore();renderHunt();renderRaidCards();renderRaid();renderPlaza();renderRooms();renderEvents();renderRoster();renderGallery();renderAdmin()}
+function renderAll(){renderShop();renderBag();renderHome();renderChar();renderMine();renderExplore();renderHunt();renderRaidCards();renderRaid();renderPlaza();renderRooms();renderEvents();renderRoster();renderGallery();renderAdmin()}
 $('#onlyme').addEventListener('change',renderPlaza);
 
 /* ---- 배경·음악 ---- */
@@ -846,8 +874,8 @@ function renderChar(){if(view()!=='char')return;const id=charView||me,c=charMap(
    <h3 style="margin-top:18px">외형</h3><p style="margin-top:4px">${esc(c.look||'외형 설명이 아직 없어요.')}</p>
    <h3>스탯</h3>${statBars(c)}
    <div class="kv"><div><b>${p.gold}</b><span>골드</span></div><div><b>${p.runs}</b><span>원정</span></div><div><b>${p.loot.length}</b><span>전리품</span></div></div>
-   <h3>전투 능력치</h3>${(()=>{const b=combat(c);return `<div class="kv" style="grid-template-columns:repeat(5,1fr)"><div><b>${hpState(c).cur} / ${b.hp}</b><span>체력</span></div><div><b>${b.agi}</b><span>민첩</span></div><div><b>${b.atk}</b><span>공격력</span></div><div><b>${b.def}</b><span>방어력</span></div><div><b>${b.heal}</b><span>회복력</span></div></div><p class="meta" style="margin:-6px 0 0">${esc(hpLine(c))} · 피해를 입은 뒤 10분마다 최대 체력의 10%씩 회복해요</p>`})()}
-   <h3>보유 칭호</h3>${(()=>{const o=ownedTitles(c),can=canEditChar(id);return o.length?`<p class="note" style="margin:2px 0 6px">장착한 칭호 하나와, 가지고 있는 모든 [패시브] 칭호의 보너스가 적용돼요.</p><div class="tlist">${o.map(tid=>{const t=titleObj(tid),on=c.titleId===tid,b=bonusText(t.bonus);return `<div class="trow${on?' on':''}${t.passive?' pas':''}">${chipOf(t)}<span class="sp ${b&&on&&!t.passive?'gold':b&&t.passive?'pastxt':'meta'}">${t.passive?'<span class="pastag">[패시브]</span> ':''}${esc(b||'보너스 없음')}</span>${on?'<span class="title">장착 중</span>'+(can?`<button class="btn ghost small" data-equip="">해제</button>`:''):can?`<button class="btn ghost small" data-equip="${esc(tid)}">장착</button>`:''}</div>`}).join('')}</div>`:'<p class="meta" style="margin-top:4px">아직 없음 · 레이드 보상이나 관리자에게서 받을 수 있어요</p>'})()}
+   <h3>전투 능력치</h3>${(()=>{const b=combat(c);return `<div class="kv tipkv" style="grid-template-columns:repeat(5,1fr)">${cbCell(c,b,'hp',`${hpState(c).cur} / ${b.hp}`)}${cbCell(c,b,'agi')}${cbCell(c,b,'atk')}${cbCell(c,b,'def')}${cbCell(c,b,'heal')}</div><p class="meta" style="margin:-6px 0 0">${esc(hpLine(c))} · 피해를 입은 뒤 10분마다 최대 체력의 10%씩 회복해요</p>`})()}
+   <h3>보유 칭호</h3>${(()=>{const o=ownedTitles(c),can=canEditChar(id);return o.length?`<p class="note" style="margin:2px 0 6px">장착 칭호 1개 + 모든 [패시브] 칭호가 적용돼요.</p><div class="tlist">${o.map(tid=>{const t=titleObj(tid),on=c.titleId===tid,b=tbText(t);return `<div class="trow${on?' on':''}${t.passive?' pas':''}">${chipOf(t)}<span class="sp ${b?'':'meta'}">${t.passive?'<span class="pastag">[패시브]</span> ':''}${b?tbHTML(t):'보너스 없음'}</span>${on?'<span class="title">장착 중</span>'+(can?`<button class="btn ghost small" data-equip="">해제</button>`:''):can?`<button class="btn ghost small" data-equip="${esc(tid)}">장착</button>`:''}</div>`}).join('')}</div>`:'<p class="meta" style="margin-top:4px">아직 없음 · 레이드 보상이나 관리자에게서 받을 수 있어요</p>'})()}
    <h3>특수 스킬</h3>${Array.isArray(c.skills)&&c.skills.length?`<div class="sklist">${c.skills.map(k=>`<div><b>${esc(k.name)}</b><span class="meta">${esc(SKTYPES[k.type]||'')} · 위력 ${+k.power||0}${k.desc?' · '+esc(k.desc):''}</span></div>`).join('')}</div>`:'<p class="meta" style="margin-top:4px">아직 없음 · 관리자가 부여할 수 있어요</p>'}
    <h3>보관함</h3>${(()=>{const v=inv(c),ks=Object.keys(ITEMS).filter(k=>v[k]>0),bl=Array.isArray(c.bag)?c.bag.length:0;
     return `<div class="row" style="margin:6px 0 4px;gap:6px">${ks.slice(0,10).map(k=>`<span title="${esc(ITEMS[k].name)} ×${v[k]}" style="position:relative">${itemIcon(k)}<span class="meta" style="position:absolute;right:-2px;bottom:-6px;background:#14161d;border-radius:6px;padding:0 3px">${v[k]}</span></span>`).join('')}${ks.length>10?'<span class="meta">…</span>':''}</div>
@@ -920,13 +948,15 @@ function drawStats(){const used=STATS.reduce((s,[k])=>s+draft[k],0),max=editAdmi
  $('#fptsl').textContent=editAdmin?'합계':'남은 포인트';$('#fpts').textContent=editAdmin?`${used} / ${pool()}`:left;
  $('#fstats').innerHTML=STATS.map(([k,n])=>`<div class="st"><span>${n}</span><button type="button" class="btn ghost small" data-s="${k}" data-d="-1" aria-label="${n} 내리기" ${draft[k]<=SMIN?'disabled':''}>−</button>${editAdmin?`<input type="number" class="num" data-sn="${k}" min="1" max="${AMAX}" value="${draft[k]}" aria-label="${n}" style="width:64px;padding:6px">`:`<span class="num">${draft[k]}</span>`}<button type="button" class="btn ghost small" data-s="${k}" data-d="1" aria-label="${n} 올리기" ${draft[k]>=max||(!editAdmin&&left<=0)?'disabled':''}>+</button><div class="bar" style="margin:0;grid-template-columns:minmax(0,1fr)"><i><b style="width:${pct(draft[k],used)}%"></b></i></div></div>`).join('');
  $('#fsave').disabled=!canWrite}
+$('#ftsel').addEventListener('change',()=>ftselb());
 $('#fstats').addEventListener('change',e=>{const i=e.target.closest('[data-sn]');if(!i)return;draft[i.dataset.sn]=Math.max(SMIN,Math.min(AMAX,Math.trunc(+i.value||SMIN)));drawStats()});
 $('#fstats').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;draft[b.dataset.s]+=+b.dataset.d;drawStats()});
 $('#abonus').addEventListener('input',drawStats);
+const ftselb=()=>{const t=titleObj($('#ftsel').value);$('#ftselb').innerHTML=t?(tbHTML(t)||'<span class="meta">보너스 없음</span>'):''};
 function fillTitleForm(c){const own=ownedTitles(c),list=isAdmin?titles:titles.filter(t=>own.includes(t.id));
- $('#ftsel').innerHTML='<option value="">레벨에 따른 기본 칭호</option>'+list.map(t=>`<option value="${esc(t.id)}">${esc(t.name)}${t.passive?' [패시브]':''}${bonusText(t.bonus)?' ('+esc(bonusText(t.bonus))+')':''}</option>`).join('');$('#ftsel').value=titleObj(c?.titleId)?c.titleId:'';
+ $('#ftsel').innerHTML='<option value="">레벨에 따른 기본 칭호</option>'+list.map(t=>`<option value="${esc(t.id)}">${esc(t.name)}${t.passive?' [패시브]':''}${tbText(t)?' ('+esc(tbText(t))+')':''}</option>`).join('');$('#ftsel').value=titleObj(c?.titleId)?c.titleId:'';ftselb();
  const base=new Set(Array.isArray(c?.ownedTitles)?c.ownedTitles:[]);if(c?.titleId)base.add(c.titleId);
- $('#aowned').innerHTML=titles.length?titles.map(t=>`<label><input type="checkbox" value="${esc(t.id)}" ${base.has(t.id)?'checked':''}>${chipOf(t)}</label>`).join(''):'<p class="note">관리 탭에서 칭호를 먼저 만들어 주세요.</p>'}
+ $('#aowned').innerHTML=titles.length?titles.map(t=>`<label><input type="checkbox" value="${esc(t.id)}" ${base.has(t.id)?'checked':''}>${chipOf(t)}${tbHTML(t)?`<span style="font-size:12px;flex-basis:100%;padding-left:22px">${tbHTML(t)}</span>`:''}</label>`).join(''):'<p class="note">관리 탭에서 칭호를 먼저 만들어 주세요.</p>'}
 function setPrev(){const c={...charMap()[editId],cls:$('#fcls').value,name:$('#fname').value||'?'};$('#fprev').outerHTML=av(c,'l').replace('class="av l"','class="av l" id="fprev"');
  if(headFile)$('#fprev').innerHTML=`<img alt="" src="${URL.createObjectURL(headFile)}">`}
 function openEdit(id){const no=t=>{editing=false;renderChar();t&&toast(t)};
@@ -1081,11 +1111,15 @@ function rng(seed){let h=1779033703^seed.length;for(let i=0;i<seed.length;i++){h
  return()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return((h^=h>>>16)>>>0)/4294967296}}
 /* 아이템: potion(예전 '회복 물약' 자리)은 조잡한 회복 물약. heal.flat=고정 회복, heal.pct=최대 체력 비율 */
 /* 기본 아이템. 관리자가 items/<키> 문서로 이름·효과·가격을 고치거나 새 아이템을 추가해요 */
-const BASE_ITEMS={potion:{name:'조잡한 회복 물약',kind:'heal_flat',power:10,value:5,explore:true,weight:2},p25:{name:'일반 회복 물약',kind:'heal_pct',power:25,value:20},
- p40:{name:'고급 회복 물약',kind:'heal_pct',power:40,value:45},p60:{name:'엘리트 회복 물약',kind:'heal_pct',power:60,value:90},pfull:{name:'완전 치유의 물약',kind:'heal_pct',power:100,value:300},
- elixir:{name:'힘의 비약',kind:'atk',power:3,value:15,explore:true,weight:1},charm:{name:'수호 부적',kind:'shield',power:1,value:15,explore:true,weight:1}};
-const IKINDS={heal_flat:'체력 고정 회복',heal_pct:'최대 체력 % 회복',atk:'전투 중 공격력 증가',shield:'다음 피해 1번 막기',sell:'효과 없음 (판매용)'};
-const autoDesc=i=>({heal_flat:`체력 ${+i.power||0} 회복`,heal_pct:+i.power>=100?'체력을 모두 회복':`최대 체력의 ${+i.power||0}% 회복`,atk:`이번 전투 동안 공격력 +${+i.power||0}`,shield:'다음에 받는 피해 1번 막기',sell:'판매용'})[i.kind]||'';
+/* shop=상점에 나옴, buy=상점 가격 */
+const BASE_ITEMS={potion:{name:'조잡한 회복 물약',kind:'heal_flat',power:10,value:5,explore:true,weight:2,shop:true,buy:15},p25:{name:'일반 회복 물약',kind:'heal_pct',power:25,value:20,shop:true,buy:60},
+ p40:{name:'고급 회복 물약',kind:'heal_pct',power:40,value:45,shop:true,buy:130},p60:{name:'엘리트 회복 물약',kind:'heal_pct',power:60,value:90,shop:true,buy:260},pfull:{name:'완전 치유의 물약',kind:'heal_pct',power:100,value:300,shop:true,buy:900},
+ elixir:{name:'힘의 비약',kind:'atk',power:3,value:15,explore:true,weight:1,shop:true,buy:45},charm:{name:'수호 부적',kind:'shield',power:1,value:15,explore:true,weight:1,shop:true,buy:45},
+ crystal:{name:'성장의 결정',kind:'stat',power:5,value:0},stone:{name:'성장석',kind:'stat',power:1,value:0},
+ trophy:{name:'토벌 증표',kind:'token',power:0,value:0},autobattle:{name:'레이드 자동 전투',kind:'pass',power:0,value:0}};
+const CRYSTAL_DROP=.1; /* 레이드 토벌 시 참여자마다 성장의 결정 10% */
+const IKINDS={heal_flat:'체력 고정 회복',heal_pct:'최대 체력 % 회복',atk:'전투 중 공격력 증가',shield:'다음 피해 1번 막기',sell:'효과 없음 (판매용)',stat:'모으면 스탯 +1',token:'교환용 (토벌 증표)',pass:'기능 해금 (쓰지 않음)'};
+const autoDesc=i=>({heal_flat:`체력 ${+i.power||0} 회복`,heal_pct:+i.power>=100?'체력을 모두 회복':`최대 체력의 ${+i.power||0}% 회복`,atk:`이번 전투 동안 공격력 +${+i.power||0}`,shield:'다음에 받는 피해 1번 막기',sell:'판매용',stat:+i.power<=1?'원하는 스탯 +1':`${+i.power||5}개 모으면 원하는 스탯 +1`,token:'증표 교환소에서 써요',pass:'레이드 자동 전투를 켤 수 있어요'})[i.kind]||'';
 const ITEMS={};let itemDocs={};
 function rebuildItems(){for(const k of Object.keys(ITEMS))delete ITEMS[k];const all={};for(const [k,v] of Object.entries(BASE_ITEMS))all[k]={...v,base:true};
  for(const [k,v] of Object.entries(itemDocs))all[k]={...(all[k]||{}),...v};
@@ -1103,8 +1137,21 @@ let autoRoll=!!store('autoRoll'),raids=[],raidView=null,raidLogs=[],unsubLog=nul
 
 /* 전투 능력치: 기존 스탯에서 계산 */
 function combat(c){const s=effStats(c),lv=prog(c).lv,v=k=>Math.max(1,+s[k]||0);
- return{agi:v('dex'),atk:Math.max(v('str'),v('int'))+Math.floor(lv/2),def:Math.floor(v('vit')/2)+Math.floor(lv/3),heal:Math.floor(v('int')/2)+2,hp:20+v('vit')*4+lv*2}}
+ const cb=cBonus(c);return{agi:Math.max(0,v('dex')+cb.agi),atk:Math.max(0,Math.max(v('str'),v('int'))+Math.floor(lv/2)+cb.atk),def:Math.max(0,Math.floor(v('vit')/2)+Math.floor(lv/3)+cb.def),heal:Math.max(0,Math.floor(v('int')/2)+2+cb.heal),hp:20+v('vit')*4+lv*2}}
 const half=n=>Math.floor((+n||0)/2);
+/* 전투 능력치 칸: 마우스를 올리면 계산 과정 (칭호로 오른 부분은 금색). 터치 화면에서는 생략 */
+const CBROLE={hp:'최대 체력',agi:'행동 순서 · 회피 판정',atk:'공격 명중 · 피해',def:'방어 판정 · 받는 피해 감소',heal:'회복 판정 · 회복량'};
+function cbTip(c,k){const e=effStats(c),{eq,pas}=bonusParts(c),lv=prog(c).lv,cb=cBonus(c),v=s=>Math.max(1,+e[s]||0),G=t=>`<span class="gold">${t}</span>`;
+ /* 공식은 숫자와 기호만. 칭호로 오른 부분은 금색 */
+ const C=n=>bv(n);
+ const st=s=>{const t=(eq[s]||0)+(pas[s]||0);return t?`(${v(s)-t}${C(t)})`:`${v(s)}`};const tb=x=>cb[x]?` ${C(cb[x])}`:'';
+ const big=+e.str>=+e.int?'str':'int';
+ const f={hp:`20 + ${st('vit')} × 4 + ${lv} × 2`,agi:`${st('dex')}${tb('agi')}`,
+  atk:`${st(big)} + ${lv} ÷ 2${tb('atk')}`,
+  def:`${st('vit')} ÷ 2 + ${lv} ÷ 3${tb('def')}`,
+  heal:`${st('int')} ÷ 2 + 2${tb('heal')}`}[k];
+ return `<span class="tip" role="tooltip"><b>${{hp:'체력',agi:'민첩',atk:'공격력',def:'방어력',heal:'회복력'}[k]}</b> <span class="meta">${CBROLE[k]}</span><br>${f} = <b>${combat(c)[k]}</b></span>`}
+const cbCell=(c,b,k,val)=>`<div tabindex="0"${cBonus(c)[k]?` class="cb ${bcls(cBonus(c)[k])}"`:''}><b>${val??b[k]}</b><span>${{hp:'체력',agi:'민첩',atk:'공격력',def:'방어력',heal:'회복력'}[k]}</span>${cbTip(c,k)}</div>`;
 /* 체력 막대 색: 절반 이하 주황, 30% 이하 빨강 */
 const hpCol=(cur,max)=>{const r=(+cur||0)/(+max||1);return r<=.3?'var(--red)':r<=.5?'#f0a050':'var(--ok)'};
 /* 현재 체력: chars 의 hp, hpAt(피해를 입은 시각). 없으면 가득. 피해 뒤 10분마다 최대 체력의 10% 회복, 최대치를 넘지 않음 */
@@ -1118,20 +1165,23 @@ const hpLine=c=>{const h=hpState(c);return h.next?`${left(h.next-Date.now())} �
 
 /* 주사위 */
 async function rollDie(el){const r=1+Math.floor(Math.random()*20);
- if(el&&!matchMedia('(prefers-reduced-motion: reduce)').matches){el.classList.add('spin');for(let i=0;i<9;i++){el.textContent=1+Math.floor(Math.random()*20);await sleep(55)}el.classList.remove('spin')}
+ if(el&&!matchMedia('(prefers-reduced-motion: reduce)').matches){el.classList.add('spin');for(let i=0;i<5;i++){el.textContent=1+Math.floor(Math.random()*20);await sleep(40)}el.classList.remove('spin')}
  if(el){el.textContent=r;el.classList.toggle('crit',r===20);el.classList.toggle('fumble',r===1)}return r}
 const autoBox=()=>`<label class="row meta" style="margin:0;gap:6px"><input type="checkbox" data-autoroll ${autoRoll?'checked':''} style="width:auto"> 자동 굴림</label>`;
 document.addEventListener('change',e=>{if(e.target.matches('[data-autoroll]')){autoRoll=e.target.checked;store('autoRoll',autoRoll);document.querySelectorAll('[data-autoroll]').forEach(x=>x.checked=autoRoll);renderExplore();renderBattle()}});
 
 /* ===== 아르바이트: 6시간마다 (한국 시간 0·6·12·18시) 상호작용 없이 계산 ===== */
-const HUNT=['목장에서 우유를 채집했다!','돌아다니던 고블린 무리를 퇴치했다!','마을 빵집에서 반죽을 도왔다!','숲에서 약초를 한 바구니 캐 왔다!','강가에서 은빛 송어를 낚았다!','상인 마차의 짐을 지켜 주었다!','폐광 입구의 박쥐 떼를 쫓아냈다!','대장간에서 풀무질을 거들었다!','길 잃은 양을 목장까지 데려다주었다!','들판의 슬라임을 말끔히 청소했다!','여관 주방에서 감자를 한 솥 깎았다!','순찰대와 함께 성벽을 한 바퀴 돌았다!','버섯 숲에서 빛나는 버섯을 모았다!','도서관의 낡은 책을 정리했다!','늑대 떼를 물리치고 가죽을 얻었다!','광장 분수에 빠진 동전을 건져 주었다!','꿀벌 농장에서 벌집을 거두었다!','항구에서 화물 상자를 날랐다!'];
+const HUNT=['목장에서 우유를 채집했다!','돌아다니던 고블린 무리를 퇴치했다!','마을 빵집에서 반죽을 도왔다!','숲에서 약초를 한 바구니 캐 왔다!','강가에서 은빛 송어를 낚았다!','상인 마차의 짐을 지켜 주었다!','폐광 입구의 박쥐 떼를 쫓아냈다!','대장간에서 풀무질을 거들었다!','길 잃은 양을 목장까지 데려다주었다!','들판의 슬라임을 말끔히 청소했다!','여관 주방에서 감자를 한 솥 깎았다!','순찰대와 함께 성벽을 한 바퀴 돌았다!','버섯 숲에서 빛나는 버섯을 모았다!','도서관의 낡은 책을 정리했다!','늑대 떼를 물리치고 가죽을 얻었다!','광장 분수에 빠진 동전을 건져 주었다!','꿀벌 농장에서 벌집을 거두었다!','항구에서 화물 상자를 날랐다!',
+ '마을 우물에서 물을 길어 날랐다!','대장간 앞에 쌓인 장작을 패 주었다!','여관에서 손님들의 짐을 방까지 옮겼다!','과수원에서 잘 익은 사과를 한 바구니 땄다!','길드 게시판의 낡은 의뢰서를 정리했다!','약초상의 심부름으로 이웃 마을에 다녀왔다!','마구간을 청소하고 말에게 여물을 주었다!','밀밭에서 수확을 거들었다!','광장의 거리 악사에게 박자를 맞춰 주었다!','포도밭에서 포도를 밟아 즙을 냈다!','지붕에 둥지를 튼 까마귀를 쫓아냈다!','마법사의 탑에서 흩어진 두루마리를 주웠다!','우체국에서 편지 꾸러미를 배달했다!','마을 아이들에게 검술 흉내를 가르쳐 주었다!','양털을 깎고 실을 잣는 일을 도왔다!','숲 입구의 이정표를 새로 세웠다!','광산 앞에서 광석 수레를 밀었다!','꽃집에서 꽃다발 포장을 도왔다!','축제 준비로 광장에 깃발을 달았다!','도망친 닭들을 모두 닭장에 몰아넣었다!','등대지기 대신 밤새 불을 지켰다!','창고에 숨어든 쥐 떼를 몰아냈다!','귀족 저택의 정원 울타리를 다듬었다!','마을 회관 벽에 새 지도를 그려 넣었다!','강을 건너려는 순례자들의 배를 저어 주었다!','숲속 오두막의 새는 지붕을 고쳤다!','고장 난 풍차 날개를 고쳤다!','장터에서 잃어버린 아이의 부모를 찾아 주었다!','호숫가에서 어부의 그물을 손질했다!','사냥꾼과 함께 덫을 살피러 숲에 다녀왔다!'];
+/* 이스터에그: 아주 가끔(1%) 나오는 문장. 보상 계산과는 따로 굴려서 경험치·골드에 영향 없음 */
+const HUNT_EGG='프리랜서에게 마감을 독촉했다!',HUNT_EGG_P=.01;
 const huntCache=new Map();
 function hunts(c){if(!c?.id)return[];const end=Math.floor((Date.now()+KST)/SLOT),start=Math.max(Math.floor(((+c.created||Date.now())+KST)/SLOT)+1,end-2000),key=c.id+':'+start+':'+end;
  if(huntCache.has(key))return huntCache.get(key);const out=[];
- for(let s=start;s<=end;s++){const r=rng(c.id+'#'+s);out.push({t:s*SLOT-KST,text:HUNT[Math.floor(r()*HUNT.length)],exp:4+Math.floor(r()*4),gold:3+Math.floor(r()*6),item:r()<.25?'potion':null})}
+ for(let s=start;s<=end;s++){const r=rng(c.id+'#'+s);{const egg=rng(c.id+'#egg#'+s)()<HUNT_EGG_P;out.push({t:s*SLOT-KST,egg,text:egg?(r(),HUNT_EGG):HUNT[Math.floor(r()*HUNT.length)],exp:4+Math.floor(r()*4),gold:3+Math.floor(r()*6),item:r()<.25?'potion':null})}}
  huntCache.set(key,out);return out}
 function renderHunt(){const el=$('#autohunt');if(!el)return;const c=myChar();
- if(!c){el.innerHTML='<h3>아르바이트</h3><p class="note">캐릭터를 등록하면 6시간마다 알아서 아르바이트를 해요.</p>';return}
+ if(!c){el.innerHTML='<h3>아르바이트</h3><p class="note">캐릭터를 만들면 6시간마다 알아서 일해요.</p>';return}
  const h=hunts(c),next=(Math.floor((Date.now()+KST)/SLOT)+1)*SLOT-KST,tot=h.reduce((a,x)=>(a.exp+=x.exp,a.gold+=x.gold,a),{exp:0,gold:0});
  el.innerHTML=`<div class="row" style="margin-bottom:8px"><h3 class="sp" style="white-space:nowrap">아르바이트 <span class="meta">· ${esc(c.name)}</span></h3><span class="meta">다음 기록까지 ${left(next-Date.now())}</span></div>
   <ul class="hunt">${h.length?h.slice(-6).reverse().map(x=>`<li><span>${esc(x.text)}</span><span class="meta">${kst(x.t)} · 경험치 +${x.exp} · 골드 +${x.gold}${x.item?' · '+ITEMS[x.item].name:''}</span></li>`).join(''):'<li class="meta">첫 기록은 다음 6시간 단위(한국 시간 0·6·12·18시)에 남아요.</li>'}</ul>
@@ -1140,7 +1190,10 @@ function renderHunt(){const el=$('#autohunt');if(!el)return;const c=myChar();
 /* ===== 보유 아이템 ===== */
 function inv(c){const o=Object.fromEntries(Object.keys(ITEMS).map(k=>[k,0]));for(const h of hunts(c))if(h.item)o[h.item]++;
  for(const k in c?.itemsGot||{})o[k]=(o[k]||0)+(+c.itemsGot[k]||0);for(const k in c?.itemsUsed||{})o[k]=(o[k]||0)-(+c.itemsUsed[k]||0);
+ if(c)for(const r of raids)if(crystalFor(r,c.id))o.crystal=(o.crystal||0)+1;
+ if(c&&'trophy' in o)o.trophy+=trophies(c).length-(+c.trophyUsed||0);
  for(const k in o)o[k]=Math.max(0,o[k]);return o}
+const crystalFor=(r,id)=>r?.status==='cleared'&&+r.participants?.[id]?.count>0&&rng('crystal#'+r.id+'#'+id)()<CRYSTAL_DROP;
 async function spendItem(k,c=myChar()){const u=c.itemsUsed||{};await patchChar(c,{itemsUsed:{[k]:(+u[k]||0)+1}})}
 
 /* ===== 던전 탐색: 계정당 하루 1회, 던전 3종 중 선택, 기록은 나에게만 ===== */
@@ -1243,7 +1296,7 @@ function renderExplore(){const el=$('#explore');if(!el)return;const c=exDoc?exCh
  const head=`<div class="hd"><h2 class="sp">던전 탐색</h2>${autoBox()}</div>`;
  if(!c){el.innerHTML=head+'<div class="empty">캐릭터를 등록하면 하루 한 번 던전을 탐색할 수 있어요.</div>';return}
  const past=pastExplores();
- const picker=exToday?'':`<p class="note" style="margin:0 0 10px">오늘 탐색할 지역을 고르세요. 계정마다 하루 한 번, 지금 활동 중인 <b>${esc(myChar()?.name||'')}</b>(으)로 출발해요. 깊이 들어갈수록 좋은 전리품이 나오고, 끝까지 마치면 더 좋은 보물을 얻어요.</p>${dungeonPicker()}`;
+ const picker=exToday?'':`<p class="note" style="margin:0 0 10px">오늘의 탐색 지역 · 계정당 하루 1회 · <b>${esc(myChar()?.name||'')}</b>(으)로 출발</p>${dungeonPicker()}`;
  if(exStarting){el.innerHTML=head+picker+`<div class="empty">${esc(DG[exStarting].name)}(으)로 향하는 중…</div>`;return}
  const d=exDoc;
  if(!d){el.innerHTML=head+picker+past;return}
@@ -1300,7 +1353,7 @@ function renderRaid(){if(view()!=='raid')return;const r=raids.find(x=>x.id===rai
   <div><div class="title">${r.status==='cleared'?'토벌 완료':'보스 레이드 · 진행 중'}</div><h1 style="font-size:30px">${esc(r.name)}</h1>${r.rec||BOSSES[r.boss]?.rec?`<span class="tchip" style="background:rgba(255,255,255,.08);color:var(--ink)">${esc(r.rec||BOSSES[r.boss].rec)}</span>`:''}<div class="meta">${esc(r.dungeon||'')} 에서 출몰 · ${when(r.createdAt)}</div>
    <div class="row" style="margin-top:12px"><span class="sp">보스 체력</span><span>${hp} / ${+r.maxHp}</span></div><div class="xp" style="height:6px"><b style="width:${hp/(+r.maxHp||1)*100}%;background:var(--red)"></b></div>
    <div class="kv"><div><b>${bs.agi}${dn('agi')}</b><span>민첩</span></div><div><b>${bs.atk}${dn('atk')}</b><span>공격력</span></div><div><b>${bs.def}${dn('def')}</b><span>방어력</span></div></div>
-   <p class="note">${r.status==='cleared'?'':`파티를 모아 함께 싸워요. 캐릭터마다 하루에 레이드 한 곳만 참여할 수 있고, 같은 레이드에는 몇 번이든 다시 도전할 수 있어요. 쓰러뜨리면 참여자 전원이 경험치 ${RAIDREW.exp} · 골드 ${RAIDREW.gold} · 토벌 증표를 받고, 낮은 확률로 칭호도 얻어요.`}</p></div></div>
+   <p class="note">${r.status==='cleared'?'':`캐릭터당 하루 레이드 1곳 · 같은 레이드는 몇 번이든. 토벌 보상: 경험치 ${RAIDREW.exp} · 골드 ${RAIDREW.gold} · 토벌 증표 · 낮은 확률로 칭호`}</p></div></div>
   ${raidRewardHTML(r)}<div id="battle"></div>
   <div class="raidcols"><div><h3>참여자</h3>${ps.length?ps.map(([id,p])=>`<div class="evmini"><button class="who row" data-c="${esc(id)}" style="gap:6px">${av(m[id],'s')}${esc(m[id]?.name||'떠난 모험가')}</button><span class="meta">피해 ${+p.dmg||0} · ${+p.count||0}회${(()=>{const t=titleObj(dropFor(r,id));return t?' · 칭호 획득 ':''})()}</span>${(()=>{const t=titleObj(dropFor(r,id));return t?chipOf(t):''})()}</div>`).join(''):'<p class="meta">아직 아무도 싸우지 않았어요.</p>'}</div>
   <div><h3>전투 기록</h3>${raidLogs.length?raidLogs.map(x=>`<div class="evmini"><span>${esc(m[x.by]?.name||'떠난 모험가')}: ${esc(x.text)}</span><span class="meta">${when(x.ts)}</span></div>`).join(''):'<p class="meta">기록이 없어요.</p>'}</div></div>`;
@@ -1369,8 +1422,11 @@ async function pAfterResp(){const P=(await partyRef(partyRid).get()).data();if(!
 
 /* ---- 내 행동 ---- */
 function pAsk(o){pRoll=o;renderBattle()}
-async function pDoRoll(){if(!pRoll||pRoll.rolling)return;pRoll.rolling=true;const o=pRoll,roll=await rollDie($('#btdie')),tot=roll+o.mod,ok=roll===20||(roll!==1&&tot>=o.dc);pRoll=null;
- try{await o.done(ok,roll,`(주사위 ${roll}+${o.mod}=${tot}, 난이도 ${o.dc})`)}catch(e){toast('저장하지 못했어요')}renderBattle()}
+/* 주사위 눈이 몇 이상이어야 성공인지 (보정 포함, 20은 무조건 성공·1은 무조건 실패) */
+const needOf=(dc,mod)=>Math.max(2,Math.min(20,(+dc||0)-(+mod||0)));
+async function pDoRoll(){if(!pRoll||pRoll.rolling)return;pRoll.rolling=true;const o=pRoll,roll=await rollDie($('#btdie')),tot=roll+o.mod,ok=roll===20||(roll!==1&&tot>=o.dc),need=needOf(o.dc,o.mod);
+ o.result={roll,ok};renderBattle();await sleep(1500);pRoll=null;
+ try{await o.done(ok,roll,`(주사위 ${roll} · ${need} 이상 성공)`)}catch(e){toast('저장하지 못했어요')}renderBattle()}
 function pRespond(kind){const P=party,mm=pMine(P);if(!mm||!P?.bossAtk)return;const [id,m]=mm,r=raids.find(x=>x.id===partyRid),bs=bossStats(r),base=P.bossAtk.base,step=P.step;
  pAsk({label:kind==='evade'?'회피 판정':'방어 판정',mod:kind==='evade'?half(m.cb.agi):half(m.cb.def)+2,dc:kind==='evade'?8+bs.agi:6+bs.atk,done:async(ok,roll,tag)=>{
   const cur=(await partyRef(partyRid).get()).data();if(cur?.step!==step||cur.bossAtk?.resp?.[id])return;
@@ -1403,11 +1459,28 @@ async function pItem(k,to){const mm=pMine(party),it=ITEMS[k];if(!mm||!it||party?
  try{await spendItem(k,c);if(it.heal){const hp=Math.min(+tm.maxHp,(+tm.hp||0)+healAmt(k,+tm.maxHp));await pUpd({members:{[to]:{hp}},...pLog(`${m.name}${who}: ${it.name} · 체력 +${hp-(+tm.hp||0)}`,'good',['heal',to])})}
   else if(it.kind==='atk')await pUpd({members:{[to]:{buff:(+tm.buff||0)+(+it.power||0)}},...pLog(`${m.name}${who}: ${it.name} · 공격력 +${+it.power||0}`,'good',['buff',to])});
   else await pUpd({members:{[to]:{charm:true}},...pLog(`${m.name}${who}: ${it.name} · 다음 피해를 막는다`,'good',['defend',to])})}catch(e){toast('아이템을 쓰지 못했어요')}}
+/* ===== 레이드 자동 전투 (Claude 없이 규칙으로) =====
+   · 보스가 나를 노리면: 회피·방어 중 넘겨야 할 주사위 눈이 작은 쪽
+   · 내 차례: 내 체력 30% 이하 → 나를 회복 / 동료가 30% 이하이고 내 체력이 절반 넘으면 → 그 동료 회복
+              그 밖에는 공격. 아직 안 쓴 강한 공격 스킬이 있으면 먼저 써요
+   · 주사위는 자동으로 굴려요. 아이템은 직접 언제든 쓸 수 있어요 */
+const ownsAuto=c=>inv(c).autobattle>0;
+const autoOn=()=>{const mm=pMine(party),c=mm&&charMap()[mm[0]];return !!(c?.autoRaid&&ownsAuto(c))};
+let pAutoKey='';
+function pAuto(){const P=party;if(!P||P.state!=='battle'||pRoll||pTarget||!autoOn())return;const [id,m]=pMine(P);if(!alive(m))return;
+ const r=raids.find(x=>x.id===partyRid);if(!r)return;const bs=bossStats(r),B=P.bossAtk&&P.bossAtk.step===P.step?P.bossAtk:null,stamp=P.step+':'+Object.keys(P.log||{}).length;
+ if(B&&B.targets.includes(id)&&!B.resp?.[id]){if(pAutoKey===stamp+'r')return;pAutoKey=stamp+'r';
+  const ne=needOf(8+bs.agi,half(m.cb?.agi)),nd=needOf(6+bs.atk,half(m.cb?.def)+2);setTimeout(()=>{if(!pRoll)pRespond(ne<=nd?'evade':'defend')},600);return}
+ if(P.order?.[P.turn]!==id||B)return;if(pAutoKey===stamp+'a')return;pAutoKey=stamp+'a';
+ const ratio=x=>(+x.hp||0)/(+x.maxHp||1),hurt=pMembers(P).filter(([tid,x])=>tid!==id&&alive(x)&&ratio(x)<=.3).sort((a,b)=>ratio(a[1])-ratio(b[1]))[0];
+ const sk=charMap()[id]?.skills||[],si=sk.findIndex((s,i)=>s.type==='strike'&&!m.used?.[i]);
+ const act=ratio(m)<=.3?'heal:'+id:hurt&&ratio(m)>.5?'heal:'+hurt[0]:si>=0?'skill:'+si:'attack';
+ setTimeout(()=>{if(!pRoll&&!pTarget)pAct(act)},700)}
 /* 대상 고르기 (회복·아이템) */
 let pTarget=null;
 function pPickTarget(o){pTarget=o;renderBattle()}
 function targetBox(){if(!pTarget)return'';const P=party,mm=pMine(P),it=pTarget.kind==='item'?ITEMS[pTarget.k]:null;
- return `<div class="dicebox" style="margin:8px 0"><div class="sp"><b>${it?esc(it.name)+'을(를) 누구에게 쓸까요?':'누구를 회복할까요?'}</b><div class="row" style="margin-top:8px;gap:6px">${pMembers(P).filter(([,x])=>alive(x)).map(([tid,x])=>`<button class="btn ${tid===mm?.[0]?'':'ghost'} small" data-p="${pTarget.kind==='item'?`item:${pTarget.k}:${tid}`:`heal:${tid}`}">${av(charMap()[tid]||{name:x.name},'s')} ${esc(x.name)}${tid===mm?.[0]?' (나)':''} <span class="meta">${+x.hp||0}/${+x.maxHp||0}</span></button>`).join('')}<button class="btn ghost small" data-p="tcancel">취소</button></div></div></div>`}
+ return `<div class="dicebox" style="margin:8px 0"><div class="sp"><b>${it?esc(it.name)+'을(를) 누구에게 쓸까요?':'누구를 회복할까요?'}</b><div class="row" style="margin-top:8px;gap:6px">${pMembers(P).filter(([,x])=>alive(x)).map(([tid,x])=>`<button class="btn ${tid===mm?.[0]?'':'ghost'} small" data-p="${pTarget.kind==='item'?`item:${pTarget.k}:${tid}`:`heal:${tid}`}">${av(charMap()[tid]||{name:x.name},'s')} ${esc(x.name)}${tid===mm?.[0]?' (나)':''} <span class="meta">${+x.hp||0}/${+x.maxHp||0}</span></button>`).join('')}<button class="btn ghost small" data-p="tcancel">뒤로</button></div></div></div>`}
 /* 내 캐릭터 체력: 다른 사람이 회복·공격해 바뀐 파티 체력을 내 캐릭터에 저장 (다른 사람의 캐릭터 문서는 쓸 수 없어서) */
 const pHpSeen={};
 function pSyncHp(){const P=party;if(!P||P.state!=='battle')return;for(const [id,m] of pMembers(P)){if(m.owner!==acct)continue;const k=partyRid+':'+id,v=+m.hp||0;
@@ -1521,20 +1594,20 @@ function renderBattle(){const el=$('#battle');if(!el)return;const r=raids.find(x
  let body='';
  if(st==='recruit'){const todayOther=c&&raids.some(x=>x.id!==r.id&&x.participants?.[c.id]?.day===kday());
   const can=c&&canWrite&&!mm&&ms.length<max&&!todayOther&&hpState(c).cur>0;
-  body=`<div class="row"><div class="sp"><h3>파티 모집 <span class="meta">${ms.length} / ${max}명</span></h3><p class="note" style="margin:4px 0 0">파티원이 모두 「준비」를 누르면 인원이 다 차지 않아도 전투가 시작돼요. 민첩이 높은 순서로 행동하고, 모두 한 번씩 행동하면 1라운드예요.</p></div></div>
+  body=`<div class="row"><div class="sp"><h3>파티 모집 <span class="meta">${ms.length} / ${max}명</span></h3><p class="note" style="margin:4px 0 0">모두 「준비」하면 시작 · 민첩 높은 순서로 행동</p></div></div>
    <div class="pmems">${ms.map(([id,m])=>mrow(id,m)).join('')||'<p class="meta">아직 아무도 없어요.</p>'}</div>
    <div class="row" style="margin-top:12px"><span class="sp meta">${!c?'캐릭터를 등록하면 참여할 수 있어요':todayOther?'이 캐릭터는 오늘 다른 레이드에 참여했어요':mm&&mm[0]!==me?`이 파티에는 ${esc(mm[1].name)}(으)로 들어가 있어요`:''}</span>
    ${mm?`<button class="btn ghost" data-p="leave">나가기</button><button class="btn" data-p="ready">${mm[1].ready?'준비 취소':'준비'}</button>`:`<button class="btn" data-p="join" ${can?'':'disabled'}>${c?esc(c.name)+'(으)로 ':''}파티 참가</button>`}</div>`;
   if(mm&&ms.length&&ms.every(([,m])=>m.ready)&&!pTimer)pTimer=setTimeout(()=>{pTimer=0;pStart()},400)}
  else if(st==='battle'){const actor=P.order[P.turn],B=P.bossAtk&&P.bossAtk.step===P.step?P.bossAtk:null,stale=now-(+P.turnAt||0)>PTIMEOUT,bhp=raidHp(r);
   let act='';
-  if(pRoll)act=`<div class="dicebox"><div class="die" id="btdie">?</div><div class="sp"><b>${esc(pRoll.label)}</b><div class="meta">주사위 + 보정 ${pRoll.mod} 이(가) 난이도 ${pRoll.dc} 이상이면 성공</div></div>${autoRoll?'<span class="meta">자동으로 굴리는 중…</span>':'<button class="btn" data-p="roll">주사위 굴리기</button>'}</div>`;
+  if(pRoll){const R=pRoll.result,nd=needOf(pRoll.dc,pRoll.mod);act=`<div class="dicebox"><div class="die${R?.roll===20?' crit':R?.roll===1?' fumble':''}" id="btdie">${R?R.roll:'?'}</div><div class="sp"><b>${esc(pRoll.label)}</b><div class="meta">${nd} 이상 성공</div>${R?`<div class="dres ${R.ok?'ok':'no'}">${R.ok?'성공!':'실패…'}</div>`:''}</div>${R?'':((autoRoll||autoOn())?'<span class="meta">자동으로 굴리는 중…</span>':'<button class="btn" data-p="roll">주사위 굴리기</button>')+(pRoll.rolling?'':'<button class="btn ghost small" data-p="back" title="행동 다시 고르기">뒤로</button>')}</div>`}
   else if(actor==='boss'){if(!B){act=`<p class="meta">${esc(r.name)}이(가) 움직이려 한다…</p>`;if(mm&&ms[0]&&ms.find(([,m])=>alive(m))?.[1].owner===acct&&!pTimer)pTimer=setTimeout(()=>{pTimer=0;pBossAct()},700)}
    else{const meT=mm&&B.targets.includes(mm[0])&&!B.resp?.[mm[0]]&&alive(mm[1]);const bs=bossStats(r);
-    act=meT?`<p><b>${B.area?'광범위 공격!':'내가 노려졌다!'}</b> 어떻게 막을까요?</p><div class="row"><button class="btn" data-p="evade">회피 <span class="meta">(민첩 · 난이도 ${8+bs.agi})</span></button><button class="btn" data-p="defend">방어 <span class="meta">(방어 · 난이도 ${6+bs.atk})</span></button></div>`
+    act=meT?`<p><b>${B.area?'광범위 공격!':'내가 노려졌다!'}</b> 어떻게 막을까요?</p><div class="row"><button class="btn bevade" data-p="evade">회피 <span class="meta">(${needOf(8+bs.agi,half(mm[1].cb?.agi))} 이상 성공)</span></button><button class="btn bdefend" data-p="defend">방어 <span class="meta">(${needOf(6+bs.atk,half(mm[1].cb?.def)+2)} 이상 성공)</span></button></div>`
      :`<p class="meta">${B.targets.filter(id=>!B.resp?.[id]).map(id=>esc(P.members[id]?.name||'?')).join(', ')||'모두'}의 대응을 기다리는 중…</p>`}}
   else if(mm&&actor===mm[0]){const sk=charMap()[mm[0]]?.skills||[],bs=bossStats(r);
-   act=`<p><b>${esc(mm[1].name)}의 차례.</b> 행동을 하나 고르세요.</p><div class="row"><button class="btn" data-p="attack">공격 <span class="meta">(난이도 ${8+bs.def})</span></button><button class="btn ghost" data-p="heal">회복 <span class="meta">(나 또는 동료)</span></button>
+   act=`<p><b>${esc(mm[1].name)}의 차례.</b> 행동을 하나 고르세요.</p><div class="row"><button class="btn" data-p="attack">공격 <span class="meta">(${needOf(8+bs.def,half((+mm[1].cb?.atk||0)+(+mm[1].buff||0)))} 이상 성공)</span></button><button class="btn ghost" data-p="heal">회복</button>
     ${sk.map((s,i)=>`<button class="btn ghost" data-p="skill:${i}" ${mm[1].used?.[i]?'disabled':''} title="${esc(SKTYPES[s.type]||'')}">${esc(s.name)}${mm[1].used?.[i]?' (사용함)':''}</button>`).join('')}</div>`}
   else act=`<p class="meta">${esc(P.members[actor]?.name||'?')}의 차례를 기다리는 중…</p>`;
   if(stale&&mm&&!pRoll)act+=`<div class="row" style="margin-top:8px"><span class="sp meta">1분 넘게 진행이 없어요</span><button class="btn ghost small" data-p="skip">차례 넘기기</button></div>`;
@@ -1543,20 +1616,22 @@ function renderBattle(){const el=$('#battle');if(!el)return;const r=raids.find(x
    <div class="row" style="font-size:13.5px"><span class="sp">${esc(r.name)}</span><span>${bhp} / ${+r.maxHp}</span></div><div class="xp" id="pbossbar" style="height:5px;margin-bottom:10px"><b style="width:${bhp/(+r.maxHp||1)*100}%;background:var(--red)"></b></div>
    <div class="pmems">${ms.map(([id,m])=>mrow(id,m)).join('')}</div>
    <div class="btlog">${logs}</div>${act}${pRoll?'':targetBox()}
-   <div class="row items">${mm?`<span class="meta">아이템</span>${Object.keys(ITEMS).filter(k=>items[k]>0&&ITEMS[k].kind!=='sell').map(k=>`<button class="btn ghost small" data-p="item:${k}" title="${esc(ITEMS[k].desc)}">${esc(ITEMS[k].name)} ${items[k]}</button>`).join('')||'<span class="meta">없음</span>'}<span class="sp"></span><button class="btn ghost small" data-p="leave">파티 나가기</button>`
+   <div class="row items">${mm?`<span class="meta">아이템</span>${Object.keys(ITEMS).filter(k=>items[k]>0&&!['sell','stat','token','pass'].includes(ITEMS[k].kind)).map(k=>`<button class="btn ghost small" data-p="item:${k}" title="${esc(ITEMS[k].desc)}">${esc(ITEMS[k].name)} ${items[k]}</button>`).join('')||'<span class="meta">없음</span>'}<span class="sp"></span><button class="btn ghost small" data-p="leave">파티 나가기</button>`
     :`<span class="meta sp">전투 중이에요. 자리가 있으면 들어가서 다음 라운드부터 함께 싸울 수 있어요.</span>${c&&ms.length<max&&!raids.some(x=>x.id!==r.id&&x.participants?.[c.id]?.day===kday())&&hpState(c).cur>0?'<button class="btn small" data-p="join">파티 참가</button>':''}`}</div>`;
-  if(pRoll&&autoRoll&&!pRoll.rolling&&!renderBattle.t)renderBattle.t=setTimeout(()=>{renderBattle.t=0;pDoRoll()},450)}
+  if(pRoll&&(autoRoll||autoOn())&&!pRoll.rolling&&!pRoll.result&&!renderBattle.t)renderBattle.t=setTimeout(()=>{renderBattle.t=0;pDoRoll()},450)}
  else if(st==='done')body=`<h3>${P.endKind==='kill'?'토벌 성공!':'파티 퇴각'}</h3><div class="pmems">${ms.map(([id,m])=>mrow(id,m)).join('')}</div><div class="btlog">${logs}</div>
   <div class="row"><span class="sp meta">${r.status==='active'?'새 파티를 모아 다시 도전할 수 있어요.':''}</span>${r.status==='active'?'<button class="btn" data-p="reset">새 파티 모집</button>':''}</div>`;
- el.innerHTML=`<div class="battle"><div class="row" style="justify-content:flex-end;margin-bottom:6px;gap:8px"><button class="btn ghost small" data-p="sfx" aria-pressed="${fxOpt.sfx}">효과음 ${fxOpt.sfx?'켜짐':'꺼짐'}</button><button class="btn ghost small" data-p="vib" aria-pressed="${fxOpt.vib}">진동 ${fxOpt.vib?'켜짐':'꺼짐'}</button>${autoBox()}</div>${body}</div>`;
- const lg=el.querySelector('.btlog');if(lg)lg.scrollTop=lg.scrollHeight}
+ el.innerHTML=`<div class="battle"><div class="row" style="justify-content:flex-end;margin-bottom:6px;gap:8px">${(()=>{const mm=pMine(party),c=mm?charMap()[mm[0]]:myChar(),own=c&&ownsAuto(c),on=own&&c.autoRaid;return `<button class="btn ${on?'':'ghost '}small" data-p="auto" aria-pressed="${!!on}" ${own&&canWrite?'':'disabled'} title="${own?'알아서 공격·회복·회피·방어':'상점이나 증표 교환소에서 얻으면 켤 수 있어요'}">자동 전투 ${on?'켜짐':'꺼짐'}</button>`})()}<button class="btn ghost small" data-p="sfx" aria-pressed="${fxOpt.sfx}">효과음 ${fxOpt.sfx?'켜짐':'꺼짐'}</button><button class="btn ghost small" data-p="vib" aria-pressed="${fxOpt.vib}">진동 ${fxOpt.vib?'켜짐':'꺼짐'}</button>${autoBox()}</div>${body}</div>`;
+ const lg=el.querySelector('.btlog');if(lg)lg.scrollTop=lg.scrollHeight;setTimeout(pAuto,0)}
 /* 화면이 다시 그려지지 않아도 보스 차례·시작을 놓치지 않도록 2초마다 확인 */
 setInterval(()=>{if(view()!=='raid'||!party||!partyRid)return;const P=party,mm=pMine(P),ms=pMembers(P);if(!mm)return;
  if(P.state==='recruit'&&ms.length&&ms.every(([,m])=>m.ready))pStart();
- else if(P.state==='battle'&&P.order?.[P.turn]==='boss'&&!(P.bossAtk&&P.bossAtk.step===P.step)&&ms.find(([,m])=>alive(m))?.[1].owner===acct)pBossAct()},2000);
+ else if(P.state==='battle'&&P.order?.[P.turn]==='boss'&&!(P.bossAtk&&P.bossAtk.step===P.step)&&ms.find(([,m])=>alive(m))?.[1].owner===acct)pBossAct();
+ pAuto()},2000);
 $('#v-raid').addEventListener('click',e=>{const t=e.target.closest('[data-p]');if(!t)return;const a=t.dataset.p;
  if(a==='join')pJoin();else if(a==='ready')pReady();else if(a==='leave')pLeave();else if(a==='reset')pReset();else if(a==='roll')pDoRoll();else if(a==='skip')pSkip();
- else if(a==='evade'||a==='defend')pRespond(a);else if(a==='tcancel'){pTarget=null;renderBattle()}else if(a.startsWith('item:')){const [,k,to]=a.split(':');pItem(k,to)}else if(a==='sfx'||a==='vib'){fxOpt[a]=!fxOpt[a];store('fx_'+a,fxOpt[a]);renderBattle();if(a==='vib'&&fxOpt.vib)buzz([30])}else pAct(a)});
+ else if(a==='evade'||a==='defend')pRespond(a);else if(a==='auto'){const mm=pMine(party),c=mm?charMap()[mm[0]]:myChar();if(c&&ownsAuto(c))patchChar(c,{autoRaid:!c.autoRaid}).then(()=>toast(c.autoRaid?'자동 전투 끔':'자동 전투 켬')).catch(()=>toast('바꾸지 못했어요'))}
+ else if(a==='tcancel'){pTarget=null;renderBattle()}else if(a==='back'){if(pRoll&&!pRoll.rolling){pRoll=null;clearTimeout(renderBattle.t);renderBattle.t=0;renderBattle()}}else if(a.startsWith('item:')){const [,k,to]=a.split(':');pItem(k,to)}else if(a==='sfx'||a==='vib'){fxOpt[a]=!fxOpt[a];store('fx_'+a,fxOpt[a]);renderBattle();if(a==='vib'&&fxOpt.vib)buzz([30])}else pAct(a)});
 
 
 
@@ -1564,16 +1639,19 @@ $('#v-raid').addEventListener('click',e=>{const t=e.target.closest('[data-p]');i
 const trophies=c=>c?raids.filter(r=>r.status==='cleared'&&+r.participants?.[c.id]?.count>0).map(r=>({id:r.id,n:r.name+' 토벌 증표',ts:r.clearedAt||r.createdAt})):[];
 function raidRewardHTML(r){if(r?.status!=='cleared')return'';const m=charMap(),ps=Object.entries(r.participants||{}).filter(([,p])=>+p.count>0).map(([id])=>id);
  const who=ids=>ids.map(id=>`<button class="ment" data-c="${esc(id)}">@${esc(m[id]?.name||'떠난 모험가')}</button>`).join(' ');
- const drops={};for(const id of ps){const t=dropFor(r,id);if(t&&titleObj(t))(drops[t]=drops[t]||[]).push(id)}
- return `<div class="rew"><p>토벌 참여 전원 <b>경험치 +${RAIDREW.exp}</b> · <b>골드 +${RAIDREW.gold}</b></p>${ps.length?`<p>${who(ps)} <span class="gold">「${esc(r.name)} 토벌 증표」</span></p>`:''}${Object.entries(drops).map(([t,ids])=>`<p>${who(ids)} ${chipOf(titleObj(t))}</p>`).join('')}</div>`}
+ const drops={};for(const id of ps){const t=dropFor(r,id);if(t&&titleObj(t))(drops[t]=drops[t]||[]).push(id)}const cry=ps.filter(id=>crystalFor(r,id));
+ return `<div class="rew"><p>토벌 참여 전원 <b>경험치 +${RAIDREW.exp}</b> · <b>골드 +${RAIDREW.gold}</b></p>${ps.length?`<p>${who(ps)} <span class="gold">「${esc(r.name)} 토벌 증표」</span></p>`:''}${cry.length?`<p>${who(cry)} <span class="loot r4">「성장의 결정」</span></p>`:''}${Object.entries(drops).map(([t,ids])=>`<p>${who(ids)} ${chipOf(titleObj(t))}</p>`).join('')}</div>`}
 /* ---- 보관함 창: 아이템 + 판매용 전리품. 끌어서 옮기고 오른쪽 아래 모서리로 크기 조절 ---- */
 const GLYPH={heal:'<path d="M10 3h4v3l2 2v11a2 2 0 01-2 2h-4a2 2 0 01-2-2V8l2-2z" fill="#e07a7a55" stroke="#e07a7a"/><path d="M10 13h4M12 11v4" stroke="#fff"/>',
  atk:'<path d="M5 19l9-9M14 4l6 0 0 6-6 6-6-6z" stroke="#ffd27a" fill="#ffd27a33"/><path d="M4 20l3-3" stroke="#ffd27a"/>',
  shield:'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z" stroke="#7fd1c7" fill="#7fd1c733"/>',
- sell:'<path d="M6 9l6-5 6 5-6 11z" stroke="#c4b5ff" fill="#c4b5ff33"/>'};
+ sell:'<path d="M6 9l6-5 6 5-6 11z" stroke="#c4b5ff" fill="#c4b5ff33"/>',
+ token:'<circle cx="12" cy="12" r="7" stroke="#ffd27a" fill="#ffd27a33"/><path d="M12 8l1.2 2.6 2.8.3-2.1 1.9.6 2.8-2.5-1.5-2.5 1.5.6-2.8-2.1-1.9 2.8-.3z" fill="#ffd27a"/>',
+ stat:'<path d="M12 3l5 6-5 12-5-12z" stroke="#ff8ccf" fill="#ff8ccf33"/><path d="M7 9h10" stroke="#ff8ccf"/>',
+ pass:'<rect x="4" y="6" width="16" height="12" rx="2" stroke="#7fd1c7" fill="#7fd1c722"/><path d="M9 10l3 2-3 2z" fill="#7fd1c7"/><path d="M14 10v4M16 10v4" stroke="#7fd1c7"/>'};
 const itemGlyph=kind=>`<svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linejoin="round">${GLYPH[kind?.startsWith('heal')?'heal':kind]||GLYPH.sell}</svg>`;
 const itemIcon=(k,sz)=>{const it=ITEMS[k];return `<span class="ico"${sz?` style="width:${sz}px;height:${sz}px"`:''}>${it?.img?`<img alt="" src="${esc(blob(it.img))}">`:itemGlyph(it?.kind)}</span>`};
-const bagCount=c=>{const v=inv(c);return Object.keys(ITEMS).reduce((a,k)=>a+(v[k]||0),0)+(Array.isArray(c?.bag)?c.bag.length:0)+trophies(c).length};
+const bagCount=c=>{const v=inv(c);return Object.keys(ITEMS).reduce((a,k)=>a+(v[k]||0),0)+(Array.isArray(c?.bag)?c.bag.length:0)};
 let bagCid=null;
 function openBag(id){bagCid=id||me;const w=$('#bagwin'),g=store('bagwin');w.hidden=false;
  if(g){Object.assign(w.style,{left:g.x+'px',top:g.y+'px',width:g.w+'px',height:g.h+'px'})}else{const W=Math.min(460,innerWidth-24),H=Math.min(540,innerHeight-40);Object.assign(w.style,{left:Math.max(12,innerWidth-W-330)+'px',top:'80px',width:W+'px',height:H+'px'})}
@@ -1585,11 +1663,11 @@ function renderBag(){const w=$('#bagwin');if(w.hidden)return;const c=charMap()[b
  $('#baghead').innerHTML=av(c,'s');$('#bagttl').textContent=`${c.name}의 보관함`;
  $('#bagbody').innerHTML=`<div class="row" style="margin-bottom:8px"><h3 class="sp">아이템 <span class="meta">${ks.reduce((a,k)=>a+v[k],0)}개</span></h3><span class="meta">골드 ${prog(c).gold}</span></div>
   ${ks.length?`<div class="igrid">${ks.map(k=>{const it=ITEMS[k];return `<div class="icell"><div class="itop">${itemIcon(k)}<b>${esc(it.name)}</b><span class="n">×${v[k]}</span></div><span class="meta">${esc(it.desc)}</span>
-   ${can?`<div class="row" style="gap:4px">${it.heal?`<button class="btn ghost small" data-bagpot="${k}">사용</button>`:''}${+it.value>0?`<button class="btn ghost small" data-bagsell="${k}">${+it.value}골드에 판매</button>`:''}</div>`:''}</div>`}).join('')}</div>`:'<p class="meta">가진 아이템이 없어요.</p>'}
+   ${can&&it.kind==='stat'?`<div class="row" style="gap:4px"><select data-cstat="${k}" style="width:auto;padding:3px 6px;font-size:13px">${STATS.map(([s2,n])=>`<option value="${s2}">${n}</option>`).join('')}</select><button class="btn ghost small" data-crystal="${k}" ${v[k]<(+it.power||5)?'disabled':''}>${+it.power||5}개로 +1</button></div>`:''}${can?`<div class="row" style="gap:4px">${it.heal?`<button class="btn ghost small" data-bagpot="${k}">사용</button>`:''}${+it.value>0?`<button class="btn ghost small" data-bagsell="${k}">${+it.value}골드에 판매</button>`:''}</div>`:''}</div>`}).join('')}</div>`:'<p class="meta">가진 아이템이 없어요.</p>'}
   <div class="row" style="margin:16px 0 8px"><h3 class="sp">전리품 <span class="meta">${bag.length}개 · ${tot}골드어치</span></h3>${can&&bag.length?`<button class="btn ghost small" data-baglsell="*">모두 판매</button>`:''}</div>
   ${bag.length?`<div class="tlist">${bag.map(x=>`<div class="trow">${lootHTML(x)}<span class="meta sp">${esc(DG[x.d]?.name||'')}</span>${can?`<button class="btn ghost small" data-baglsell="${esc(x.id)}">판매</button>`:''}</div>`).join('')}</div>`:'<p class="meta">던전 탐색에서 얻은 전리품이 여기에 쌓여요.</p>'}
-  ${(()=>{const tr=trophies(c);return tr.length?`<h3 style="margin:16px 0 8px">토벌 증표 <span class="meta">${tr.length}개</span></h3><div class="tlist">${tr.map(x=>`<div class="trow"><span class="loot r5">${esc(x.n)}</span><span class="meta sp">${x.ts?when(x.ts):''}</span><button class="btn ghost small" data-raid="${esc(x.id)}">기록 보기</button></div>`).join('')}</div>`:''})()}
-  ${can?'':'<p class="note" style="margin-top:12px">다른 사람의 보관함은 볼 수만 있어요.</p>'}`}
+  ${(()=>{const tr=trophies(c);return tr.length?`<h3 style="margin:16px 0 8px">토벌 기록 <span class="meta">${tr.length}개</span></h3><div class="tlist">${tr.map(x=>`<div class="trow"><span class="loot r5">${esc(x.n)}</span><span class="meta sp">${x.ts?when(x.ts):''}</span><button class="btn ghost small" data-raid="${esc(x.id)}">기록 보기</button></div>`).join('')}</div>`:''})()}
+  ${can?'':'<p class="note" style="margin-top:12px">보기 전용</p>'}`}
 $('#bagx').addEventListener('click',()=>{$('#bagwin').hidden=true});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#bagwin').hidden&&!document.querySelector('dialog[open]'))$('#bagwin').hidden=true});
 {const w=$('#bagwin'),hd=$('#baghd');let d=null;
@@ -1598,6 +1676,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#bagwin').hidde
  const end=()=>{if(d){d=null;saveBagGeo()}};hd.addEventListener('pointerup',end);hd.addEventListener('pointercancel',end);
  new ResizeObserver(()=>{clearTimeout(w.t);w.t=setTimeout(saveBagGeo,300)}).observe(w);addEventListener('resize',keepBagIn)}
 $('#bagbody').addEventListener('click',async e=>{const c=charMap()[bagCid];if(!c||!mine(c.id)||!canWrite)return;
+ const cr=e.target.closest('[data-crystal]');if(cr){cr.disabled=true;await useCrystal(c,cr.dataset.crystal,$(`#bagbody [data-cstat="${cr.dataset.crystal}"]`)?.value);return}
  const u=e.target.closest('[data-bagpot]');if(u){u.disabled=true;await useHealOutside(c,u.dataset.bagpot);return}
  const si=e.target.closest('[data-bagsell]');if(si){const k=si.dataset.bagsell,it=ITEMS[k];if(!it||inv(c)[k]<=0)return;si.disabled=true;
   try{await spendItem(k,c);await patchChar(c,{soldGold:(+c.soldGold||0)+(+it.value||0)});toast(`${it.name}을(를) ${+it.value}골드에 팔았어요`)}catch(err){toast('팔지 못했어요');si.disabled=false}return}
@@ -1606,10 +1685,46 @@ $('#bagbody').addEventListener('click',async e=>{const c=charMap()[bagCid];if(!c
   const val=sold.reduce((a,x)=>a+(+x.v||0),0);sb.disabled=true;try{await patchChar(c,{bag:bag.filter(x=>!sold.includes(x)),soldGold:(+c.soldGold||0)+val});toast(`${val}골드에 팔았어요`)}catch(err){toast('팔지 못했어요');sb.disabled=false}}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-bag]');if(b)openBag(b.dataset.bag)});
 
+/* ===== 상점: 12시간마다(한국 시간 0·12시) 캐릭터마다 다른 상품 6개. 저장: chars 의 spentGold, shop{slot,reroll,b}, trophyUsed, statBoost ===== */
+const SHOPSLOT=12*3600e3,SHOPN=6;
+const shopSlot=()=>Math.floor((Date.now()+KST)/SHOPSLOT);
+const buyPrice=k=>{const i=ITEMS[k];return Math.max(1,+i?.buy||Math.round((+i?.value||5)*3))};
+function shopState(c){const sl=shopSlot(),sh=c?.shop?.slot===sl?c.shop:{slot:sl,reroll:0,b:''};return{slot:sl,reroll:+sh.reroll||0,b:String(sh.b||'').split(',').map(x=>+x||0)}}
+function shopStock(c){if(!c)return[];const st=shopState(c),g=rng(c.id+'#shop#'+st.slot+'#'+st.reroll),pool=Object.keys(ITEMS).filter(k=>ITEMS[k].shop);
+ const pick=[];const p=pool.slice();while(pick.length<SHOPN&&p.length){const k=p.splice(Math.floor(g()*p.length),1)[0];const pr=buyPrice(k);pick.push({k,price:pr,max:pr>=500?1:pr>=150?2:1+Math.floor(g()*4)})}
+ return pick.map((x,i)=>({...x,left:Math.max(0,x.max-(st.b[i]||0))}))}
+const trophyLeft=c=>inv(c).trophy||0;
+/* 토벌 증표 교환 */
+const TRADES=[{id:'reroll',name:'상점 새로고침',cost:1,desc:'상품을 새로 뽑아요'},{id:'pfull',name:'완전 치유의 물약',cost:2,desc:'체력 모두 회복'},{id:'stone',name:'성장석',cost:5,desc:'원하는 스탯 +1'},{id:'autobattle',name:'레이드 자동 전투',cost:10,desc:'레이드에서 알아서 싸워요 (한 번만)'}];
+const AUTOPRICE=500; /* 상점 고정 상품: 레이드 자동 전투 */
+function renderShop(){if(view()!=='shop')return;const c=myChar(),el=$('#shopbody');const nx=(shopSlot()+1)*SHOPSLOT-KST;$('#shopnext').textContent=`새 상품까지 ${left(nx-Date.now())}`;
+ if(!c){el.innerHTML='<div class="empty">캐릭터를 만들면 이용할 수 있어요.</div>';return}
+ const gold=prog(c).gold,stock=shopStock(c),tl=trophyLeft(c),can=canWrite;
+ el.innerHTML=`<div class="row" style="margin-bottom:12px">${av(c,'s')}<b>${esc(c.name)}</b><span class="sp"></span><span class="gold">골드 ${gold}</span><span class="meta">· 토벌 증표 ${tl}</span></div>
+  ${stock.length?`<div class="igrid">${stock.map((x,i)=>{const it=ITEMS[x.k];return `<div class="icell"><div class="itop">${itemIcon(x.k)}<b>${esc(it.name)}</b><span class="n">남음 ${x.left}</span></div><span class="meta">${esc(it.desc)}</span>
+   <button class="btn small" data-buy="${i}" ${!can||x.left<=0||gold<x.price?'disabled':''}>${x.left<=0?'품절':`${x.price}골드`}</button></div>`}).join('')}</div>`:'<p class="meta">상점에 나올 아이템이 없어요. 아이템 관리에서 「상점 판매」를 체크해 주세요.</p>'}
+  <div class="trow" style="margin-top:10px">${itemIcon('autobattle')}<b>레이드 자동 전투</b><span class="meta sp">고정 상품 · 한 번 사면 계속 써요</span><button class="btn small" data-fixed="autobattle" ${!can||inv(c).autobattle>0||gold<AUTOPRICE?'disabled':''}>${inv(c).autobattle>0?'보유 중':AUTOPRICE+'골드'}</button></div>
+  <h3 style="margin:22px 0 8px">증표 교환소</h3><p class="note" style="margin:0 0 8px">레이드 토벌 증표로 교환해요. 보유 ${tl}개</p>
+  <div class="tlist">${TRADES.map(t=>`<div class="trow">${t.id==='reroll'?'<span class="ico">'+itemGlyph('sell')+'</span>':itemIcon(t.id)}<b>${esc(t.name)}</b><span class="meta sp">${esc(t.desc)}</span><button class="btn ghost small" data-trade="${t.id}" ${!can||tl<t.cost||(t.id==='autobattle'&&inv(c).autobattle>0)?'disabled':''}>${t.id==='autobattle'&&inv(c).autobattle>0?'보유 중':`증표 ${t.cost}개`}</button></div>`).join('')}</div>`}
+let shopBusy=false;
+$('#shopbody').addEventListener('click',async e=>{const c=myChar();if(!c||shopBusy||!canWrite)return;const b=e.target.closest('[data-buy],[data-trade],[data-fixed]');if(!b)return;shopBusy=true;b.disabled=true;
+ try{const st=shopState(c);
+  if(b.dataset.buy!==undefined){const i=+b.dataset.buy,x=shopStock(c)[i];if(!x||x.left<=0)throw{m:'품절이에요'};if(prog(c).gold<x.price)throw{m:'골드가 모자라요'};
+   const bb=st.b.slice();while(bb.length<SHOPN)bb.push(0);bb[i]++;const got=c.itemsGot||{};
+   await patchChar(c,{spentGold:(+c.spentGold||0)+x.price,itemsGot:{[x.k]:(+got[x.k]||0)+1},shop:{slot:st.slot,reroll:st.reroll,b:bb.join(',')}});toast(`${ITEMS[x.k].name} 구매`)}
+  else if(b.dataset.fixed==='autobattle'){if(inv(c).autobattle>0)throw{m:'이미 가지고 있어요'};if(prog(c).gold<AUTOPRICE)throw{m:'골드가 모자라요'};const got=c.itemsGot||{};await patchChar(c,{spentGold:(+c.spentGold||0)+AUTOPRICE,itemsGot:{autobattle:(+got.autobattle||0)+1}});toast('레이드 자동 전투 구매')}
+  else{const t=TRADES.find(x=>x.id===b.dataset.trade);if(!t||trophyLeft(c)<t.cost)throw{m:'증표가 모자라요'};if(t.id==='autobattle'&&inv(c).autobattle>0)throw{m:'이미 가지고 있어요'};const used=(+c.trophyUsed||0)+t.cost;
+   if(t.id==='reroll')await patchChar(c,{trophyUsed:used,shop:{slot:st.slot,reroll:st.reroll+1,b:''}});
+   else{const got=c.itemsGot||{};await patchChar(c,{trophyUsed:used,itemsGot:{[t.id]:(+got[t.id]||0)+1}})}toast(`${t.name} 교환`)}}
+ catch(err){toast(err?.m||'처리하지 못했어요')}shopBusy=false;renderShop()});
+/* 성장의 결정: 보관함에서 필요 개수만큼 써서 스탯 +1 (statBoost) */
+async function useCrystal(c,k,stat){const it=ITEMS[k],need=Math.max(1,+it?.power||5);if(!c||!STATN[stat]||inv(c)[k]<need)return toast(`${need}개가 필요해요`);
+ try{const u=c.itemsUsed||{},sb=c.statBoost||{};await patchChar(c,{itemsUsed:{[k]:(+u[k]||0)+need},statBoost:{[stat]:(+sb[stat]||0)+1}});toast(`${STATN[stat]} +1`)}catch(e){toast('쓰지 못했어요')}}
+
 /* ---- 아이템 관리 ---- */
 let editItem=null;
 $('#ikind').innerHTML=Object.entries(IKINDS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
-const ipowLabel=()=>{const k=$('#ikind').value;$('#ipowl').textContent={heal_flat:'회복량',heal_pct:'회복 %',atk:'공격력 +',shield:'수치',sell:'수치'}[k];$('#ipow').disabled=k==='shield'||k==='sell'};
+const ipowLabel=()=>{const k=$('#ikind').value;$('#ipowl').textContent={heal_flat:'회복량',heal_pct:'회복 %',atk:'공격력 +',shield:'수치',sell:'수치',stat:'필요 개수',token:'수치',pass:'수치'}[k];$('#ipow').disabled=['shield','sell','token','pass'].includes(k)};
 $('#ikind').addEventListener('change',()=>{ipowLabel();drawItemImg()});ipowLabel();
 let itemImg=null,itemImgFile=null;
 function drawItemImg(){const p=$('#iimgprev');p.innerHTML=itemImgFile?`<img alt="" src="${URL.createObjectURL(itemImgFile)}">`:itemImg?`<img alt="" src="${esc(blob(itemImg))}">`:itemGlyph($('#ikind').value);$('#iimgdel').hidden=!(itemImg||itemImgFile);$('#iimgn').textContent=itemImgFile?'저장을 눌러야 반영돼요':''}
@@ -1621,20 +1736,23 @@ $('#iimgdel').addEventListener('click',()=>{itemImg=null;itemImgFile=null;drawIt
 function resetItemForm(){editItem=null;itemImg=null;itemImgFile=null;$('#fitem').reset();$('#isave').textContent='아이템 추가';$('#icancel').hidden=true;ipowLabel();drawItemImg()}
 $('#icancel').addEventListener('click',resetItemForm);
 $('#fitem').addEventListener('submit',async e=>{e.preventDefault();const name=$('#iname').value.trim();if(!name)return;
- const doc={name,kind:$('#ikind').value,power:Math.trunc(+$('#ipow').value||0),value:Math.max(0,Math.trunc(+$('#ival').value||0)),desc:$('#idesc').value.trim(),explore:$('#iexp').checked,img:itemImg||null,updated:Date.now()};
+ const doc={name,kind:$('#ikind').value,power:Math.trunc(+$('#ipow').value||0),value:Math.max(0,Math.trunc(+$('#ival').value||0)),desc:$('#idesc').value.trim(),explore:$('#iexp').checked,shop:$('#ishop').checked,buy:Math.max(0,Math.trunc(+$('#ibuy').value||0))||null,img:itemImg||null,updated:Date.now()};
  const sb=$('#isave');sb.disabled=true;
  try{if(itemImgFile){if(!assets)throw{code:'noassets'};doc.img=(await assets.upload(itemImgFile,{type:'image/png'})).id}await db.doc('items/'+(editItem||('it-'+Date.now().toString(36)))).set(doc);toast(editItem?'아이템을 고쳤어요':'아이템을 만들었어요');resetItemForm()}catch(err){toast(err?.code==='noassets'?'이 보기에서는 이미지를 올릴 수 없어요':'저장하지 못했어요')}sb.disabled=false});
 function renderItemsAdmin(){if(!isAdmin)return;
- $('#aitems').innerHTML=Object.entries(ITEMS).map(([k,i])=>`<tr><td><div class="row" style="gap:8px;flex-wrap:nowrap">${itemIcon(k)}<span><b>${esc(i.name)}</b>${i.base?' <span class="meta">기본</span>':''}</span></div></td><td>${esc(IKINDS[i.kind]||'')} · ${esc(i.desc)}</td><td>${+i.value||0}골드</td><td>${i.explore?'나옴':'안 나옴'}</td>
+ $('#aitems').innerHTML=Object.entries(ITEMS).map(([k,i])=>`<tr><td><div class="row" style="gap:8px;flex-wrap:nowrap">${itemIcon(k)}<span><b>${esc(i.name)}</b>${i.base?' <span class="meta">기본</span>':''}</span></div></td><td>${esc(IKINDS[i.kind]||'')} · ${esc(i.desc)}</td><td>${+i.value||0}골드</td><td>${[i.explore?'탐색':'',i.shop?`상점 ${buyPrice(k)}골드`:''].filter(Boolean).join(' · ')||'없음'}</td>
   <td><div class="row" style="gap:4px"><button class="btn ghost small" data-iedit="${esc(k)}">수정</button>${i.base?(itemDocs[k]?`<button class="btn ghost small" data-del="items/${esc(k)}">기본값으로</button>`:''):`<button class="btn ghost small warn" data-del="items/${esc(k)}">삭제</button>`}</div></td></tr>`).join('');
  const cs=$('#gchar').value,is=$('#gitem').value;
  $('#gchar').innerHTML=chars.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');$('#gitem').innerHTML=Object.entries(ITEMS).map(([k,i])=>`<option value="${esc(k)}">${esc(i.name)}</option>`).join('');
- if(cs)$('#gchar').value=cs;if(is)$('#gitem').value=is}
+ if(cs)$('#gchar').value=cs;if(is)$('#gitem').value=is;gHave()}
 $('#aitems').addEventListener('click',e=>{const b=e.target.closest('[data-iedit]');if(!b)return;const k=b.dataset.iedit,i=ITEMS[k];if(!i)return;editItem=k;
- $('#iname').value=i.name;$('#ikind').value=i.kind;$('#ipow').value=+i.power||0;$('#ival').value=+i.value||0;$('#idesc').value=itemDocs[k]?.desc||'';$('#iexp').checked=!!i.explore;itemImg=i.img||null;itemImgFile=null;drawItemImg();
+ $('#iname').value=i.name;$('#ikind').value=i.kind;$('#ipow').value=+i.power||0;$('#ival').value=+i.value||0;$('#idesc').value=itemDocs[k]?.desc||'';$('#iexp').checked=!!i.explore;$('#ishop').checked=!!i.shop;$('#ibuy').value=i.buy||'';itemImg=i.img||null;itemImgFile=null;drawItemImg();
  $('#isave').textContent='아이템 고치기';$('#icancel').hidden=false;ipowLabel();$('#fitem').scrollIntoView({block:'center'})});
-$('#gbtn').addEventListener('click',async()=>{const c=charMap()[$('#gchar').value],k=$('#gitem').value,n=Math.max(1,Math.trunc(+$('#gqty').value||1));if(!c||!ITEMS[k])return;
- try{const got=c.itemsGot||{};await patchChar(c,{itemsGot:{[k]:(+got[k]||0)+n}});toast(`${c.name}에게 ${ITEMS[k].name} ${n}개를 줬어요`)}catch(err){toast('주지 못했어요')}});
+const gHave=()=>{const c=charMap()[$('#gchar').value],k=$('#gitem').value;$('#ghave').textContent=c&&ITEMS[k]?`${c.name}의 ${ITEMS[k].name}: 지금 ${inv(c)[k]||0}개 · 음수를 적으면 빼요`:'음수를 적으면 빼요'};
+$('#gchar').addEventListener('change',gHave);$('#gitem').addEventListener('change',gHave);
+$('#gbtn').addEventListener('click',async()=>{const c=charMap()[$('#gchar').value],k=$('#gitem').value,n=Math.trunc(+$('#gqty').value||0);if(!c||!ITEMS[k]||!n)return;
+ try{if(n>0){const got=c.itemsGot||{};await patchChar(c,{itemsGot:{[k]:(+got[k]||0)+n}});toast(`${c.name}에게 ${ITEMS[k].name} ${n}개 지급`)}
+  else{const m=Math.min(-n,inv(c)[k]||0);if(!m)return toast('뺄 아이템이 없어요');const u=c.itemsUsed||{};await patchChar(c,{itemsUsed:{[k]:(+u[k]||0)+m}});toast(`${c.name}에게서 ${ITEMS[k].name} ${m}개 회수`)}}catch(err){toast('바꾸지 못했어요')}});
 
 /* ---- 관리자 지정 (게임 안) ---- */
 let adminIds=[],isOwnerV=false,canEditV=false;
@@ -1653,13 +1771,15 @@ $('#tspawn').addEventListener('click',async()=>{const k=$('#tboss').value,B=BOSS
 function renderTxAcct(){const el=$('#txacct');if(!el||!isAdmin)return;const cur=el.value,owners=[...new Set(chars.map(c=>c.owner).filter(Boolean))];
  el.innerHTML=owners.map(o=>`<option value="${esc(o)}">${esc(chars.filter(c=>c.owner===o).map(c=>c.name).join(', '))}${o===acct?' (나)':''}</option>`).join('')||'<option value="">캐릭터를 만든 계정이 없어요</option>';if(cur&&owners.includes(cur))el.value=cur}
 $('#txreset').addEventListener('click',async e=>{const b=e.currentTarget,o=$('#txacct').value;if(!o)return;
- if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='한 번 더 누르면 초기화';setTimeout(()=>{b.dataset.arm='';b.textContent='이 계정의 던전 탐색 초기화'},4000);return}
- b.dataset.arm='';b.textContent='이 계정의 던전 탐색 초기화';
+ 
+
  try{const t=Date.now();await db.doc('config/exreset').update({[o]:t}).catch(()=>db.doc('config/exreset').set({[o]:t}));toast(`${$('#txacct').selectedOptions[0]?.textContent||''} 계정의 던전 탐색을 초기화했어요`)}catch(err){toast('초기화하지 못했어요')}});
-$('#treset').addEventListener('click',async e=>{const b=e.currentTarget;if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='한 번 더 누르면 초기화';return}b.dataset.arm='';b.textContent='오늘 던전 탐색 초기화 (내 계정)';
- try{const ids=exHist.filter(x=>x.id==='explore-'+kday()||x.status==='active').map(x=>x.id);for(const id of ids)await exCol().doc(id).delete();toast('오늘 탐색을 초기화했어요')}catch(err){toast('초기화하지 못했어요')}});
-$('#traid').addEventListener('click',async()=>{const mineIds=myChars().map(c=>c.id);let n=0;
- try{for(const r of raids){const p={};for(const id of mineIds){const x=r.participants?.[id];if(x&&(x.day===kday()||x.lastDay===kday()))p[id]={day:'',lastDay:''}}if(Object.keys(p).length){await db.doc('raids/'+r.id).update({participants:p});n++}}toast(n?'오늘 레이드 참여를 초기화했어요':'초기화할 참여 기록이 없어요')}catch(err){toast('초기화하지 못했어요')}});
+async function resetRaidDay(ids,label){let n=0;
+ try{for(const r of raids){const p={};for(const id of ids){const x=r.participants?.[id];if(x&&(x.day===kday()||x.lastDay===kday()))p[id]={day:'',lastDay:''}}if(Object.keys(p).length){await db.doc('raids/'+r.id).update({participants:p});n++}}toast(n?`${label} 오늘 레이드 참여를 초기화했어요`:`${label} 초기화할 참여 기록이 없어요`)}catch(err){toast('초기화하지 못했어요')}}
+function renderTrChar(){const el=$('#trchar');if(!el||!isAdmin)return;const cur=el.value;el.innerHTML='<option value="*">모든 캐릭터</option>'+chars.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${mine(c.id)?' (내 캐릭터)':''}</option>`).join('');if(cur&&[...el.options].some(o=>o.value===cur))el.value=cur}
+$('#trreset').addEventListener('click',async e=>{const b=e.currentTarget,v=$('#trchar').value;if(!v)return;
+ 
+const c=charMap()[v];await resetRaidDay(v==='*'?chars.map(x=>x.id):[v],v==='*'?'모든 캐릭터의':(c?.name||'')+'의')});
 $('#theal').addEventListener('click',async()=>{try{for(const c of myChars())if(c.hp!=null)await patchChar(c,{hp:null,hpAt:null});toast('내 캐릭터 체력을 모두 회복했어요')}catch(err){toast('회복하지 못했어요')}});
 
 
@@ -1732,12 +1852,12 @@ route();renderAll();
  db.collection('raids').orderBy('createdAt','desc').limit(20).onSnapshot(s=>{raids=rows(s);renderRaidCards();renderRaid();renderHome();renderMine();renderChar();renderRoster()},()=>{});
  if(acct){watchExplore();exCol().where('kind','==','explore').onSnapshot(s=>{exHist=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.ts||0)-(a.ts||0));pickRun();renderExplore();exApplyReset()},()=>{});
   db.doc('config/exreset').onSnapshot(s=>{exResetAt=+(s.exists&&s.data()[acct])||0;exApplyReset()},()=>{})}
- setInterval(()=>{watchExplore();renderMine();if(view()==='char')renderChar();if(view()==='events'){renderHunt();renderExplore()};if(view()==='raid')renderBattle()},60e3);
+ setInterval(()=>{watchExplore();renderMine();if(view()==='char')renderChar();if(view()==='events'){renderHunt();renderExplore()};if(view()==='raid')renderBattle();if(view()==='shop')renderShop()},60e3);
  db.collection('stories').orderBy('ts','desc').limit(400).onSnapshot(s=>{stories=s.docs.map(d=>({id:d.id,...d.data()}));renderStoryAdmin()},()=>{});
  db.doc('config/admins').onSnapshot(s=>{adminIds=s.exists&&Array.isArray(s.data().ids)?s.data().ids:[];applyAdmin();renderAdminList()},()=>{});
  db.collection('items').onSnapshot(s=>{itemDocs=Object.fromEntries(s.docs.map(d=>[d.id,d.data()]));rebuildItems();renderAll()},()=>{});
  db.doc('config/bosses').onSnapshot(s=>{bossCfg=s.exists?{...s.data()}:{};renderRaidCards();renderRaid();renderHome();renderBossAdmin()},()=>{});
- db.collection('titles').onSnapshot(s=>{titles=rows(s).sort((a,b)=>(a.ts||0)-(b.ts||0));renderAll()},()=>{});
+ db.collection('titles').onSnapshot(s=>{titles=withBuiltin(rows(s)).sort((a,b)=>(a.ts||0)-(b.ts||0));renderAll()},()=>{});
  db.collection('banners').onSnapshot(s=>{banners=rows(s);renderHome();renderBanners()},()=>{});
  if(room){room.onPeers(ch=>{peers=ch.peers;renderHome()},()=>{room=null;renderHome()});room.presence({at:view(),cid:me||null}).catch(()=>{})}
  db.doc('config/site').onSnapshot(s=>{cfg=s.exists?{...s.data()}:{};applyCfg();renderAdmin()},()=>{});
