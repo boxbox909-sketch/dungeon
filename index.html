@@ -204,6 +204,7 @@ dialog.cfm{max-width:min(440px,92vw)}
 .pmems{display:grid;gap:6px;margin:10px 0}
 .pmem{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:14px}
 .pmem.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}.pmem.down{opacity:.45}
+.rew p{margin:4px 0}.rew{border:1px solid #ffd27a55;background:rgba(255,210,122,.05);border-radius:8px;padding:8px 12px;margin:8px 0}
 .fwin{position:fixed;z-index:15;display:flex;flex-direction:column;background:#14161d;border:1px solid var(--line2);border-radius:12px;box-shadow:0 18px 50px #000b;resize:both;overflow:hidden;min-width:280px;min-height:220px;max-width:96vw;max-height:92vh}
 .fwin[hidden]{display:none}
 .fwin .fhd{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);cursor:move;user-select:none;touch-action:none;background:rgba(255,255,255,.03)}
@@ -215,6 +216,12 @@ dialog.cfm{max-width:min(440px,92vw)}
 .ico img{width:100%;height:100%;object-fit:cover}.ico svg{width:24px;height:24px}
 .kv .kvbtn{appearance:none;font:inherit;color:inherit;background:none;border:1px solid var(--line);border-radius:6px;padding:6px 2px;cursor:pointer;width:100%}.kv .kvbtn:hover{border-color:var(--acc)}
 .kv .kvbtn b{display:block;font-size:16px}.kv .kvbtn span{font-size:11.5px;color:var(--dim)}
+.fx-hit{animation:fxhit .45s ease}.fx-heal{animation:fxheal .7s ease}.fx-guard{animation:fxguard .5s ease}.fx-warn{animation:fxwarn .6s ease}
+@keyframes fxhit{0%,100%{transform:none}20%{transform:translateX(-6px);box-shadow:0 0 0 2px var(--red),0 0 18px #e07a7a88}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+@keyframes fxheal{0%,100%{box-shadow:none}40%{box-shadow:0 0 0 2px var(--ok),0 0 22px #86d4a499;background:rgba(134,212,164,.08)}}
+@keyframes fxguard{0%,100%{box-shadow:none}40%{box-shadow:0 0 0 2px #6aa8ff,0 0 18px #6aa8ff88}}
+@keyframes fxwarn{0%,100%{box-shadow:none}30%,70%{box-shadow:0 0 0 2px #ffd27a,0 0 16px #ffd27a77}}
+@media(prefers-reduced-motion:reduce){.fx-hit,.fx-heal,.fx-guard,.fx-warn{animation:none}}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:20;display:none;padding:10px 16px}
 .lb img{display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:6px}
 .fade{animation:in .35s ease}@keyframes in{from{opacity:0;transform:translateY(4px)}}@media(prefers-reduced-motion:reduce){.fade{animation:none}}
@@ -409,6 +416,8 @@ dialog.cfm{max-width:min(440px,92vw)}
  <div class="sec"><h3>배경 이미지</h3>
   <div class="row" style="margin-top:8px"><label class="btn ghost small" style="margin:0">이미지 선택<input type="file" id="abg" accept="image/*" hidden></label><button class="btn ghost small warn" id="abgdel">배경 지우기</button><span class="meta" id="abgn"></span></div>
   <label for="adim">어둡게 덮기 <span id="adimv"></span></label><input type="range" id="adim" min="0.2" max="0.95" step="0.05"></div>
+ <div class="sec"><h3>레이드 효과음</h3>
+  <p class="note">▶ 를 눌러 들어 보고, 마음에 드는 번호의 「선택」을 누르면 모두에게 그 소리가 나요. 시안이 하나뿐인 소리는 정해 둔 것을 써요.</p><div id="asfx"></div></div>
  <div class="sec"><h3>배경 음악</h3>
   <p class="note">m4a · mp4 · webm 형식의 음악 파일을 올릴 수 있어요 (20메가바이트 이하). mp3 형식은 올릴 수 없으니 m4a로 바꿔서 올려 주세요. 플레이어는 상단의 음악 켜기 버튼으로 들어요.</p>
   <div class="row"><label class="btn ghost small" style="margin:0">음악 선택<input type="file" id="abgm" accept=".m4a,.mp4,.webm,.weba,audio/mp4,audio/webm,video/mp4,video/webm" hidden></label><button class="btn ghost small warn" id="abgmdel">음악 지우기</button><span class="meta" id="abgmn"></span></div></div>
@@ -635,7 +644,7 @@ function renderMine(){const c=myChar(),el=$('#mine'),list=myChars();$('.layout')
  el.innerHTML=`<div class="row" style="margin-bottom:10px"><span class="meta sp">활동 중인 캐릭터 · ${list.length} / ${MAXCHARS}</span>${tog}</div>${heads}<div class="wrapme fade"><div class="head" style="background:${col}">${face(c)?`<img alt="" src="${esc(blob(face(c)))}">`:esc(c.name[0])}</div>
   <div><div>${titleChip(c)}</div><h2>${esc(c.name)}</h2><div class="meta"><span class="lv">레벨 ${p.lv}</span> · ${esc(c.cls)}</div></div>
   <div><div class="xp"><b style="width:${p.into}%"></b></div><div class="meta">경험치 ${p.into} / 100</div></div>
-  <div class="stats">${(()=>{const b=combat(c),h=hpState(c);return `<div class="row" style="font-size:13.5px"><span class="sp">체력</span><span>${h.cur} / ${h.max}</span></div><div class="xp" style="height:5px;margin:4px 0"><b style="width:${h.cur/h.max*100}%;background:var(--ok)"></b></div><div class="meta">${hpLine(c)}</div>
+  <div class="stats">${(()=>{const b=combat(c),h=hpState(c);return `<div class="row" style="font-size:13.5px"><span class="sp">체력</span><span>${h.cur} / ${h.max}</span></div><div class="xp" style="height:5px;margin:4px 0"><b style="width:${h.cur/h.max*100}%;background:${hpCol(h.cur,h.max)}"></b></div><div class="meta">${hpLine(c)}</div>
    <div class="kv" style="grid-template-columns:repeat(4,1fr);margin:10px 0 0"><div><b>${b.agi}</b><span>민첩</span></div><div><b>${b.atk}</b><span>공격력</span></div><div><b>${b.def}</b><span>방어력</span></div><div><b>${b.heal}</b><span>회복력</span></div></div>`})()}</div>
   <div class="kv"><div><b>${p.gold}</b><span>골드</span></div><div><b>${p.runs}</b><span>원정</span></div><button class="kvbtn" data-bag="${esc(c.id)}" aria-label="보관함 열기"><b>${bagCount(c)}</b><span>보관함</span></button></div></div>
   <button class="btn ghost small" style="width:100%" data-c="${esc(c.id)}">내 캐릭터 편집</button>${MODE==='firebase'?`<p class="meta" style="margin:10px 0 0;overflow-wrap:anywhere">계정 코드 · ${esc(acct)}</p>`:''}`}
@@ -765,6 +774,14 @@ $('#abosses').addEventListener('change',async e=>{const t=e.target;
 $('#abosses').addEventListener('click',e=>{const b=e.target.closest('[data-bimgdel]');if(!b)return;const im={...(bossCfg.imgs||{})};delete im[b.dataset.bimgdel];saveBossCfg({imgs:im})});
 
 
+/* ---- 관리: 효과음 고르기 ---- */
+const SFXN={attack:'공격',evade:'회피',bhit:'보스가 맞는 소리',defend:'방어',roar:'피격 대상 지정',heal:'회복'};
+function renderSfxAdmin(){const el=$('#asfx');if(!el||!isAdmin)return;
+ if(!Object.keys(SFXLIB).some(k=>SFXLIB[k].length>1)){el.innerHTML=`<div class="tlist">${Object.keys(SFXLIB).map(k=>`<div class="trow"><button type="button" class="btn ghost small" data-sfxplay="${k}:0" aria-label="${SFXN[k]} 듣기">▶</button><span class="sp">${SFXN[k]} · ${esc(SFXLIB[k][0][0])}</span></div>`).join('')}</div>`;return}
+ el.innerHTML=Object.keys(SFXLIB).filter(k=>SFXLIB[k].length>1).map(k=>{const cur=+(cfg.sfx?.[SFXKEY[k]||k]??SFXDEF[k]);return `<h4 style="margin:14px 0 6px;font:500 14px 'Noto Sans KR'">${SFXN[k]}</h4><div class="tlist">${SFXLIB[k].map(([n],i)=>`<div class="trow${i===cur?' on':''}"><button type="button" class="btn ghost small" data-sfxplay="${k}:${i}" aria-label="${i+1}번 듣기">▶</button><span class="sp">${i+1}. ${esc(n)}</span>${i===cur?'<span class="title">사용 중</span>':`<button type="button" class="btn ghost small" data-sfxset="${k}:${i}">선택</button>`}</div>`).join('')}</div>`}).join('')}
+$('#asfx').addEventListener('click',e=>{const p=e.target.closest('[data-sfxplay]'),q=e.target.closest('[data-sfxset]');
+ if(p){const [k,i]=p.dataset.sfxplay.split(':');try{ac()?.resume?.();SFXLIB[k][+i][1]()}catch(err){}}
+ if(q){const [k,i]=q.dataset.sfxset.split(':');setCfg({sfx:{...(cfg.sfx||{}),[SFXKEY[k]||k]:+i}})}});
 /* ---- 관리: 홈 슬라이드 ---- */
 function renderBanners(){if(!isAdmin)return;const L={events:'던전 이벤트',party:'파티 명부',plaza:'광장',rooms:'대화방'};
  const b=[...banners].sort((a,b)=>(a.order||0)-(b.order||0));
@@ -793,7 +810,7 @@ function renderEvents(){const m=charMap(),l=$('#evlist');$('#oldev').hidden=!eve
 function renderRoster(){const r=$('#roster');
  r.innerHTML=chars.length?chars.map(c=>{const p=prog(c);return `<button class="card" data-c="${esc(c.id)}"><div class="pf">${av(c)}<div><div>${titleChip(c)}</div><h3>${esc(c.name)}${mine(c.id)?' <span class="meta">(내 캐릭터)</span>':''}</h3><div class="meta"><span class="lv">레벨 ${p.lv}</span> · ${esc(c.cls)} · 원정 ${p.runs}회</div></div></div>${statBars(c)}</button>`}).join(''):'<div class="empty">아직 등록된 모험가가 없어요.</div>'}
 function renderGallery(){}
-function renderAdmin(){if(!isAdmin)return;renderRelink();renderTxAcct();renderStoryAdmin();renderItemsAdmin();renderAdminList();renderBossAdmin();renderBanners();renderTitles();
+function renderAdmin(){if(!isAdmin)return;renderSfxAdmin();renderRelink();renderTxAcct();renderStoryAdmin();renderItemsAdmin();renderAdminList();renderBossAdmin();renderBanners();renderTitles();
  $('#achars').innerHTML=chars.map(c=>{const p=prog(c);return `<tr><td>${esc(c.name)} <span class="meta">${esc(c.cls)}</span></td><td>${titleChip(c)}</td><td>${p.lv}</td><td>${STATS.reduce((s,[k])=>s+(+c.stats?.[k]||0),0)} / ${POOL+(+c.bonus||0)}</td><td><button class="btn ghost small" data-edit="${esc(c.id)}">관리</button></td></tr>`}).join('')||'<tr><td colspan="5" class="meta">캐릭터가 없어요.</td></tr>';
  $('#abgn').textContent=cfg.bg?'배경 이미지 사용 중':'배경 없음';$('#abgmn').textContent=cfg.bgm?'음악 사용 중':'음악 없음';
  $('#adim').value=cfg.dim??.72;$('#adimv').textContent=Math.round((cfg.dim??.72)*100)+'%'}
@@ -1088,6 +1105,8 @@ let autoRoll=!!store('autoRoll'),raids=[],raidView=null,raidLogs=[],unsubLog=nul
 function combat(c){const s=effStats(c),lv=prog(c).lv,v=k=>Math.max(1,+s[k]||0);
  return{agi:v('dex'),atk:Math.max(v('str'),v('int'))+Math.floor(lv/2),def:Math.floor(v('vit')/2)+Math.floor(lv/3),heal:Math.floor(v('int')/2)+2,hp:20+v('vit')*4+lv*2}}
 const half=n=>Math.floor((+n||0)/2);
+/* 체력 막대 색: 절반 이하 주황, 30% 이하 빨강 */
+const hpCol=(cur,max)=>{const r=(+cur||0)/(+max||1);return r<=.3?'var(--red)':r<=.5?'#f0a050':'var(--ok)'};
 /* 현재 체력: chars 의 hp, hpAt(피해를 입은 시각). 없으면 가득. 피해 뒤 10분마다 최대 체력의 10% 회복, 최대치를 넘지 않음 */
 function hpState(c){const max=combat(c).hp,amt=Math.max(1,Math.ceil(max*REGEN_PCT));if(c?.hp==null)return{cur:max,max,amt,next:null};
  const at=+c.hpAt||Date.now(),ticks=Math.max(0,Math.floor((Date.now()-at)/REGEN_INT)),cur=Math.min(max,Math.max(0,+c.hp||0)+ticks*amt);
@@ -1243,7 +1262,7 @@ function renderExplore(){const el=$('#explore');if(!el)return;const c=exDoc?exCh
  const pots=d.status==='active'?Object.keys(ITEMS).filter(k=>ITEMS[k].heal&&inv(c)[k]>0):[];
  if(pots.length&&d.hp<d.maxHp)act+=`<div class="row items"><span class="meta">물약</span>${pots.map(k=>`<button class="btn ghost small" data-expot="${k}" title="${esc(ITEMS[k].desc)}">${esc(ITEMS[k].name)} ${inv(c)[k]}</button>`).join('')}</div>`;
  const oldNote=d===exOld?`<p class="bosswarn" style="margin-top:14px">${esc(d.day)}에 마무리하지 못한 탐색이에요. 이어서 끝내면 보상을 받고, 위에서 새 지역을 고르면 이 기록은 지워져요.</p>`:'';
- el.innerHTML=head+picker+oldNote+`<div class="exbar"><b>${esc(d.title)}</b><span>${esc(dgOf(d).name)}</span><span>${esc(c?.name||d.charName||'')}</span><span class="sp"></span><span>체력 ${+d.hp} / ${+d.maxHp}</span><span>관문 ${last+1} / ${d.stages.length}</span><span>경험치 +${+g.exp} · 골드 +${+g.gold}</span></div><div class="xp"><b style="width:${d.hp/d.maxHp*100}%;background:var(--red)"></b></div>`
+ el.innerHTML=head+picker+oldNote+`<div class="exbar"><b>${esc(d.title)}</b><span>${esc(dgOf(d).name)}</span><span>${esc(c?.name||d.charName||'')}</span><span class="sp"></span><span>체력 ${+d.hp} / ${+d.maxHp}</span><span>관문 ${last+1} / ${d.stages.length}</span><span>경험치 +${+g.exp} · 골드 +${+g.gold}</span></div><div class="xp"><b style="width:${d.hp/d.maxHp*100}%;background:${hpCol(d.hp,d.maxHp)}"></b></div>`
   +`<div class="exstory">${story}</div>`+act+(d.status==='done'?past:'');
  const st=el.querySelector('.exstory');if(st)st.scrollTop=st.scrollHeight;
  if(d.status==='active'&&!s.roll&&autoRoll&&!exBusy&&!renderExplore.t)renderExplore.t=setTimeout(()=>{renderExplore.t=0;exRoll()},500)}
@@ -1281,8 +1300,8 @@ function renderRaid(){if(view()!=='raid')return;const r=raids.find(x=>x.id===rai
   <div><div class="title">${r.status==='cleared'?'토벌 완료':'보스 레이드 · 진행 중'}</div><h1 style="font-size:30px">${esc(r.name)}</h1>${r.rec||BOSSES[r.boss]?.rec?`<span class="tchip" style="background:rgba(255,255,255,.08);color:var(--ink)">${esc(r.rec||BOSSES[r.boss].rec)}</span>`:''}<div class="meta">${esc(r.dungeon||'')} 에서 출몰 · ${when(r.createdAt)}</div>
    <div class="row" style="margin-top:12px"><span class="sp">보스 체력</span><span>${hp} / ${+r.maxHp}</span></div><div class="xp" style="height:6px"><b style="width:${hp/(+r.maxHp||1)*100}%;background:var(--red)"></b></div>
    <div class="kv"><div><b>${bs.agi}${dn('agi')}</b><span>민첩</span></div><div><b>${bs.atk}${dn('atk')}</b><span>공격력</span></div><div><b>${bs.def}${dn('def')}</b><span>방어력</span></div></div>
-   <p class="note">${r.status==='cleared'?`토벌에 참여한 모두에게 경험치 ${RAIDREW.exp} · 골드 ${RAIDREW.gold} · 「${esc(r.name)} 토벌 증표」가 주어졌고, 일부는 낮은 확률로 칭호를 얻었어요.`:`파티를 모아 함께 싸워요. 캐릭터마다 하루에 레이드 한 곳만 참여할 수 있고, 같은 레이드에는 몇 번이든 다시 도전할 수 있어요. 쓰러뜨리면 참여자 전원이 경험치 ${RAIDREW.exp} · 골드 ${RAIDREW.gold} · 토벌 증표를 받고, 낮은 확률로 칭호도 얻어요.`}</p></div></div>
-  <div id="battle"></div>
+   <p class="note">${r.status==='cleared'?'':`파티를 모아 함께 싸워요. 캐릭터마다 하루에 레이드 한 곳만 참여할 수 있고, 같은 레이드에는 몇 번이든 다시 도전할 수 있어요. 쓰러뜨리면 참여자 전원이 경험치 ${RAIDREW.exp} · 골드 ${RAIDREW.gold} · 토벌 증표를 받고, 낮은 확률로 칭호도 얻어요.`}</p></div></div>
+  ${raidRewardHTML(r)}<div id="battle"></div>
   <div class="raidcols"><div><h3>참여자</h3>${ps.length?ps.map(([id,p])=>`<div class="evmini"><button class="who row" data-c="${esc(id)}" style="gap:6px">${av(m[id],'s')}${esc(m[id]?.name||'떠난 모험가')}</button><span class="meta">피해 ${+p.dmg||0} · ${+p.count||0}회${(()=>{const t=titleObj(dropFor(r,id));return t?' · 칭호 획득 ':''})()}</span>${(()=>{const t=titleObj(dropFor(r,id));return t?chipOf(t):''})()}</div>`).join(''):'<p class="meta">아직 아무도 싸우지 않았어요.</p>'}</div>
   <div><h3>전투 기록</h3>${raidLogs.length?raidLogs.map(x=>`<div class="evmini"><span>${esc(m[x.by]?.name||'떠난 모험가')}: ${esc(x.text)}</span><span class="meta">${when(x.ts)}</span></div>`).join(''):'<p class="meta">기록이 없어요.</p>'}</div></div>`;
  renderBattle()}
@@ -1298,11 +1317,11 @@ let party=null,partyUnsub=null,partyRid=null,pBusy=false,pRoll=null,pTimer=0;
 const partyRef=rid=>db.doc('raids/'+rid+'/party/cur');
 const partyMax=r=>String(r?.rec||BOSSES[r?.boss]?.rec||'3~4').startsWith('1')?2:4;
 function watchParty(rid){if(partyRid===rid)return;partyUnsub?.();party=null;partyRid=rid;pRoll=null;
- partyUnsub=db?partyRef(rid).onSnapshot(s=>{party=s.exists?s.data():null;renderBattle()},()=>{}):null}
+ pSeen=null;partyUnsub=db?partyRef(rid).onSnapshot(s=>{party=s.exists?s.data():null;renderBattle();pFx();pSyncHp()},()=>{}):null}
 const pMembers=P=>Object.entries(P?.members||{}).filter(([,m])=>!m.left).sort((a,b)=>(a[1].at||0)-(b[1].at||0));
 const pMine=P=>pMembers(P).find(([,m])=>m.owner===acct);
 const alive=m=>m&&!m.left&&(+m.hp||0)>0;
-const pLog=(t,cls='')=>({['log']:{[Date.now().toString(36)+Math.random().toString(36).slice(2,6)]:{t,cls,ts:Date.now()}}});
+const pLog=(t,cls='',fx=null)=>({['log']:{[Date.now().toString(36)+Math.random().toString(36).slice(2,6)]:{t,cls,ts:Date.now(),...(fx?{fx:{k:fx[0],to:[].concat(fx[1]||[])}}:{})}}});
 const pUpd=patch=>partyRef(partyRid).update(patch);
 function computeOrder(P,r,round){const bs=bossStats(r);const list=pMembers(P).filter(([,m])=>alive(m)&&(+m.joinedRound||1)<=round).map(([id,m])=>({id,agi:+m.cb?.agi||0,t:Math.random()}));
  list.push({id:'boss',agi:bs.agi,t:Math.random()});return list.sort((a,b)=>b.agi-a.agi||b.t-a.t).map(x=>x.id)}
@@ -1335,16 +1354,16 @@ async function pAdvance(expect){await withLease(async P=>{const r=raids.find(x=>
  if(t>=order.length){round++;order=computeOrder(P,r,round);t=0;while(t<order.length&&!ok(order[t]))t++;extra=pLog(`${round}라운드 · 순서: ${order.map(id=>id==='boss'?r.name:P.members[id].name).join(' → ')}`)}
  await pUpd({turn:t,round,order,step:+P.step+1,turnAt:Date.now(),bossAtk:null,...extra})})}
 async function pCheckEnd(){const s=await partyRef(partyRid).get(),P=s.data(),r=(await db.doc('raids/'+partyRid).get()).data();if(!P||P.state!=='battle')return;
- if(r&&raidHp(r)<=0){await pUpd({state:'done',endKind:'kill',...pLog(`${r.name}이(가) 쓰러졌다! 토벌 성공!`,'good')});
+ if(r&&raidHp(r)<=0){await pUpd({state:'done',endKind:'kill',...pLog(`${r.name}이(가) 쓰러졌다! 토벌 성공!`,'good',['win','boss'])});
   if(r.status==='active')await db.doc('raids/'+partyRid).update({status:'cleared',clearedAt:Date.now(),killer:me,dropPool:(()=>{const own=(bossCfg.drops?.[r.boss]||[]).filter(titleObj);return own.length?own:titles.filter(t=>t.drop).map(t=>t.id)})()});
   await db.collection('raids/'+partyRid+'/log').add({by:me,ts:Date.now(),dmg:0,text:`토벌 성공 · 파티: ${pMembers(P).map(([,m])=>m.name).join(', ')}`});return}
- if(!pMembers(P).some(([,m])=>alive(m))){await pUpd({state:'done',endKind:'wipe',...pLog('파티가 모두 쓰러졌다. 전원 길드로 돌아왔다.','bad')});
+ if(!pMembers(P).some(([,m])=>alive(m))){await pUpd({state:'done',endKind:'wipe',...pLog('파티가 모두 쓰러졌다. 전원 길드로 돌아왔다.','bad',['lose'])});
   await db.collection('raids/'+partyRid+'/log').add({by:me,ts:Date.now(),dmg:0,text:`파티 퇴각 · ${pMembers(P).map(([,m])=>m.name).join(', ')}`})}}
 async function pBossAct(){await withLease(async P=>{const r=raids.find(x=>x.id===partyRid);if(!P||P.state!=='battle'||P.order[P.turn]!=='boss'||P.bossAtk?.step===P.step||!r)return;
  const bs=bossStats(r),live=pMembers(P).filter(([,m])=>alive(m)&&(+m.joinedRound||1)<=P.round);if(!live.length)return;
  const area=live.length>1&&Math.random()<.3,base=bs.atk+d6()-(area?2:0);let targets=area?live.map(([id])=>id):[pick(live)[0]],note='',patch={};
  if(!area){const cov=live.find(([id,m])=>m.cover&&id!==targets[0]);if(cov){note=` ${cov[1].name}이(가) 대신 막아선다!`;targets=[cov[0]];patch={members:{[cov[0]]:{cover:false}}}}}
- await pUpd({...patch,bossAtk:{step:P.step,area,base,targets,resp:{}},...pLog(area?`${r.name}의 광범위 공격!`:`${r.name}이(가) ${P.members[targets[0]].name}을(를) 노린다!${note}`,'bad')})})}
+ await pUpd({...patch,bossAtk:{step:P.step,area,base,targets,resp:{}},...pLog(area?`${r.name}의 광범위 공격!`:`${r.name}이(가) ${P.members[targets[0]].name}을(를) 노린다!${note}`,'bad',['roar',targets])})})}
 async function pAfterResp(){const P=(await partyRef(partyRid).get()).data();if(!P?.bossAtk)return;
  if(P.bossAtk.targets.every(id=>P.bossAtk.resp?.[id]||!alive(P.members[id])))await pAdvance(P.step);await pCheckEnd()}
 
@@ -1358,43 +1377,146 @@ function pRespond(kind){const P=party,mm=pMine(P);if(!mm||!P?.bossAtk)return;con
   let dmg=0,txt;if(ok)txt=`${m.name}: ${kind==='evade'?'몸을 날려 피했다':'막아냈다'}! 피해 없음 ${tag}`;
   else if(cur.members[id].charm){txt=`${m.name}: 수호 부적이 공격을 막았다! ${tag}`}else{dmg=Math.max(0,base-(+m.cb.def||0));txt=`${m.name}: ${kind==='evade'?'회피':'방어'} 실패, 피해 ${dmg} ${tag}`}
   const hp=Math.max(0,(+cur.members[id].hp||0)-dmg);
-  await pUpd({bossAtk:{resp:{[id]:{ok,dmg}}},members:{[id]:{hp,...(!ok&&cur.members[id].charm?{charm:false}:{})}},...pLog(txt+(hp<=0?` · ${m.name}이(가) 쓰러졌다`:''),ok?'good':'bad')});
+  await pUpd({bossAtk:{resp:{[id]:{ok,dmg}}},members:{[id]:{hp,...(!ok&&cur.members[id].charm?{charm:false}:{})}},...pLog(txt+(hp<=0?` · ${m.name}이(가) 쓰러졌다`:''),ok?'good':'bad',[ok?kind:dmg?'hit':'defend',id])});
   const c=charMap()[id];if(c&&dmg)saveHp(c,hp,true).catch(()=>{});await pAfterResp()}})}
 function pAct(a){const P=party,mm=pMine(P);if(!mm||P?.order?.[P.turn]!==mm[0])return;const [id,m]=mm,r=raids.find(x=>x.id===partyRid),bs=bossStats(r),step=P.step,c=charMap()[id];
- const fin=async(patch,txt,cls,adv=true)=>{await pUpd({...patch,...pLog(txt,cls)});if(adv)await pAdvance(step);await pCheckEnd()};
+ const fin=async(patch,txt,cls,adv=true,fx=null)=>{await pUpd({...patch,...pLog(txt,cls,fx)});if(adv)await pAdvance(step);await pCheckEnd()};
  if(a==='attack'||a.startsWith('skill:')){let s=null,i=-1;if(a.startsWith('skill:')){i=+a.slice(6);s=(c?.skills||[])[i];if(!s||m.used?.[i])return}
   const used=i>=0?{members:{[id]:{used:{[i]:1}}}}:{};
-  if(s?.type==='extra')return fin(used,`${m.name}의 「${s.name}」! 한 번 더 행동한다.`,'good',false);
-  if(s?.type==='cover')return fin({members:{[id]:{cover:true,used:{[i]:1}}}},`${m.name}의 「${s.name}」! 보스의 다음 단일 공격을 대신 맞는다.`,'good');
+  if(s?.type==='extra')return fin(used,`${m.name}의 「${s.name}」! 한 번 더 행동한다.`,'good',false,['buff',id]);
+  if(s?.type==='cover')return fin({members:{[id]:{cover:true,used:{[i]:1}}}},`${m.name}의 「${s.name}」! 보스의 다음 단일 공격을 대신 맞는다.`,'good',true,['defend',id]);
   if(s?.type?.startsWith('weak_')){const st=s.type.slice(5),pw=Math.max(1,+s.power||1),N={agi:'민첩',atk:'공격력',def:'방어력'};
    return pAsk({label:`「${s.name}」 판정`,mod:half(m.int),dc:10,done:async(ok,roll,tag)=>{if(ok){const d=r.debuffs?.[id]||{};await db.doc('raids/'+r.id).update({debuffs:{[id]:{[st]:(+d[st]||0)-pw}}})}
-    await fin(used,ok?`「${s.name}」 성공! 보스의 ${N[st]} -${pw} ${tag}`:`「${s.name}」이(가) 통하지 않았다 ${tag}`,ok?'good':'bad')}})}
+    await fin(used,ok?`「${s.name}」 성공! 보스의 ${N[st]} -${pw} ${tag}`:`「${s.name}」이(가) 통하지 않았다 ${tag}`,ok?'good':'bad',true,[ok?'debuff':'miss','boss'])}})}
   const bonus=s?.type==='strike'?Math.max(1,+s.power||1):0;
   return pAsk({label:s?`「${s.name}」 공격 판정`:'공격 판정',mod:half((+m.cb.atk||0)+(+m.buff||0)),dc:8+bs.def,done:async(ok,roll,tag)=>{let txt;
    if(ok){let dmg=Math.max(1,(+m.cb.atk||0)+(+m.buff||0)+d6()+bonus-bs.def);if(roll===20)dmg*=2;const p=(await db.doc('raids/'+r.id).get()).data()?.participants?.[id]||{};
     await db.doc('raids/'+r.id).update({participants:{[id]:{dmg:(+p.dmg||0)+dmg}}});txt=`${m.name}${s?'의 「'+s.name+'」':''} 적중! 피해 ${dmg}${roll===20?' (치명타)':''} ${tag}`}else txt=`${m.name}의 공격이 빗나갔다 ${tag}`;
-   await fin(used,txt,ok?'good':'bad')}})}
- if(a==='heal')return pAsk({label:'회복 판정',mod:half(m.cb.heal),dc:10,done:async(ok,roll,tag)=>{const amt=ok?(+m.cb.heal||0)+d6():Math.ceil((+m.cb.heal||0)/2),cur=(await partyRef(partyRid).get()).data().members[id],hp=Math.min(+cur.maxHp,(+cur.hp||0)+amt);
-  if(c)saveHp(c,hp,false).catch(()=>{});await fin({members:{[id]:{hp}}},`${m.name} 회복 +${hp-(+cur.hp||0)} ${tag}`,ok?'good':'')}})}
-async function pItem(k){const mm=pMine(party),it=ITEMS[k];if(!mm||!it||party?.state!=='battle')return;const [id,m]=mm,c=charMap()[id];if(!c||inv(c)[k]<=0)return;
+   await fin(used,txt,ok?'good':'bad',true,[ok?(roll===20?'crit':'attack'):'miss','boss'])}})}
+ if(a.startsWith('heal')){const to=a.slice(5)||id,tm=P.members[to];if(!a.includes(':')&&pMembers(P).filter(([,x])=>alive(x)).length>1)return pPickTarget({kind:'heal'});if(!alive(tm))return toast('쓰러진 동료는 회복할 수 없어요');pTarget=null;
+  return pAsk({label:to===id?'회복 판정':`${tm.name} 회복 판정`,mod:half(m.cb.heal),dc:10,done:async(ok,roll,tag)=>{const amt=ok?(+m.cb.heal||0)+d6():Math.ceil((+m.cb.heal||0)/2),cur=(await partyRef(partyRid).get()).data().members[to],hp=Math.min(+cur.maxHp,(+cur.hp||0)+amt);
+   await fin({members:{[to]:{hp}}},`${m.name} → ${to===id?'자신':tm.name} 회복 +${hp-(+cur.hp||0)} ${tag}`,ok?'good':'',true,['heal',to])}})}}
+async function pItem(k,to){const mm=pMine(party),it=ITEMS[k];if(!mm||!it||party?.state!=='battle')return;const [id,m]=mm,c=charMap()[id];if(!c||inv(c)[k]<=0)return;
  if(!(it.heal||it.kind==='atk'||it.kind==='shield'))return toast('전투에서 쓸 수 없는 아이템이에요');
- try{await spendItem(k,c);if(it.heal){const hp=Math.min(+m.maxHp,(+m.hp||0)+healAmt(k,+m.maxHp));await pUpd({members:{[id]:{hp}},...pLog(`${m.name}: ${it.name} · 체력 +${hp-(+m.hp||0)}`,'good')});saveHp(c,hp,false).catch(()=>{})}
-  else if(it.kind==='atk')await pUpd({members:{[id]:{buff:(+m.buff||0)+(+it.power||0)}},...pLog(`${m.name}: ${it.name} · 공격력 +${+it.power||0}`,'good')});
-  else await pUpd({members:{[id]:{charm:true}},...pLog(`${m.name}: ${it.name} · 다음 피해를 막는다`,'good')})}catch(e){toast('아이템을 쓰지 못했어요')}}
+ if(!to){if(pMembers(party).filter(([,x])=>alive(x)).length>1)return pPickTarget({kind:'item',k});to=id}
+ const tm=party.members[to];if(!alive(tm))return toast('쓰러진 동료에게는 쓸 수 없어요');pTarget=null;renderBattle();const who=to===id?'':` → ${tm.name}`;
+ try{await spendItem(k,c);if(it.heal){const hp=Math.min(+tm.maxHp,(+tm.hp||0)+healAmt(k,+tm.maxHp));await pUpd({members:{[to]:{hp}},...pLog(`${m.name}${who}: ${it.name} · 체력 +${hp-(+tm.hp||0)}`,'good',['heal',to])})}
+  else if(it.kind==='atk')await pUpd({members:{[to]:{buff:(+tm.buff||0)+(+it.power||0)}},...pLog(`${m.name}${who}: ${it.name} · 공격력 +${+it.power||0}`,'good',['buff',to])});
+  else await pUpd({members:{[to]:{charm:true}},...pLog(`${m.name}${who}: ${it.name} · 다음 피해를 막는다`,'good',['defend',to])})}catch(e){toast('아이템을 쓰지 못했어요')}}
+/* 대상 고르기 (회복·아이템) */
+let pTarget=null;
+function pPickTarget(o){pTarget=o;renderBattle()}
+function targetBox(){if(!pTarget)return'';const P=party,mm=pMine(P),it=pTarget.kind==='item'?ITEMS[pTarget.k]:null;
+ return `<div class="dicebox" style="margin:8px 0"><div class="sp"><b>${it?esc(it.name)+'을(를) 누구에게 쓸까요?':'누구를 회복할까요?'}</b><div class="row" style="margin-top:8px;gap:6px">${pMembers(P).filter(([,x])=>alive(x)).map(([tid,x])=>`<button class="btn ${tid===mm?.[0]?'':'ghost'} small" data-p="${pTarget.kind==='item'?`item:${pTarget.k}:${tid}`:`heal:${tid}`}">${av(charMap()[tid]||{name:x.name},'s')} ${esc(x.name)}${tid===mm?.[0]?' (나)':''} <span class="meta">${+x.hp||0}/${+x.maxHp||0}</span></button>`).join('')}<button class="btn ghost small" data-p="tcancel">취소</button></div></div></div>`}
+/* 내 캐릭터 체력: 다른 사람이 회복·공격해 바뀐 파티 체력을 내 캐릭터에 저장 (다른 사람의 캐릭터 문서는 쓸 수 없어서) */
+const pHpSeen={};
+function pSyncHp(){const P=party;if(!P||P.state!=='battle')return;for(const [id,m] of pMembers(P)){if(m.owner!==acct)continue;const k=partyRid+':'+id,v=+m.hp||0;
+ if(pHpSeen[k]===undefined){pHpSeen[k]=v;continue}if(pHpSeen[k]===v)continue;const prev=pHpSeen[k];pHpSeen[k]=v;const c=charMap()[id];if(c)saveHp(c,v,v<prev).catch(()=>{})}}
 async function pSkip(){const P=party;if(!P||P.state!=='battle'||Date.now()-(+P.turnAt||0)<PTIMEOUT)return;const actor=P.order[P.turn],step=P.step;
  if(actor==='boss'){if(!P.bossAtk||P.bossAtk.step!==step)return pBossAct();
   const miss=P.bossAtk.targets.filter(id=>!P.bossAtk.resp?.[id]&&alive(P.members[id])),patch={bossAtk:{resp:{}},members:{}};
   for(const id of miss){const m=P.members[id],dmg=m.charm?0:Math.max(0,P.bossAtk.base-(+m.cb.def||0));patch.bossAtk.resp[id]={ok:false,dmg,auto:true};patch.members[id]={hp:Math.max(0,(+m.hp||0)-dmg),...(m.charm?{charm:false}:{})}}
-  await pUpd({...patch,...pLog(`응답이 없어 ${miss.map(id=>P.members[id].name).join(', ')}이(가) 그대로 공격을 받았다.`,'bad')});return pAfterResp()}
+  await pUpd({...patch,...pLog(`응답이 없어 ${miss.map(id=>P.members[id].name).join(', ')}이(가) 그대로 공격을 받았다.`,'bad',['hit',miss])});return pAfterResp()}
  await pUpd(pLog(`${P.members[actor]?.name||'?'}의 차례를 넘겼다.`));await pAdvance(step);await pCheckEnd()}
 
+/* ---- 효과음 · 진동 · 화면 효과 (전투 기록에 남은 fx 로 모두에게 같은 효과) ---- */
+let FXVOL=.08; /* 효과음 크기 (1 = 처음 크기) */
+const fxOpt={sfx:store('fx_sfx')??true,vib:store('fx_vib')??true};let pSeen=null,actx=null;
+/* 부드러운 효과음: 전자음 대신 걸러 낸 바람 소리·둔탁한 타격·나무 두드림·작은 종소리. 시작과 끝을 천천히 올리고 내려 딸깍 소리를 없앴어요 */
+function ac(){if(!actx)try{actx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return null}return actx}
+function env(g,t,v,a,d){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v*FXVOL,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d)}
+function tone(f,d,v=.2,at=0,f2,a=.01){const c=ac();if(!c)return;const t=c.currentTime+at,o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+a+d);env(g,t,v,a,d);o.connect(g).connect(c.destination);o.start(t);o.stop(t+a+d+.05)}
+/* 걸러 낸 잡음: type=lowpass(둔탁)/bandpass(바람·나무), f→f2 로 훑기 */
+function noise(d,v=.3,at=0,type='lowpass',f=600,f2,q=1,a=.01){const c=ac();if(!c)return;const t=c.currentTime+at,n=Math.ceil(c.sampleRate*(a+d+.05)),b=c.createBuffer(1,n,c.sampleRate),x=b.getChannelData(0);
+ for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const s=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain();s.buffer=b;fl.type=type;fl.Q.value=q;fl.frequency.setValueAtTime(f,t);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,t+a+d);
+ env(g,t,v,a,d);s.connect(fl).connect(g).connect(c.destination);s.start(t)}
+/* 퍽: 아주 짧고 건조한 타격 (울림 없이) */
+const punch=(at=0,v=1)=>{noise(.07,.9*v,at,'lowpass',1100,220,.8,.002);noise(.05,.5*v,at,'bandpass',180,0,1.5,.002);tone(140,.06,.35*v,at,70,.002)};
+/* 금속 방패: 어긋난 높은 배음 여러 개가 함께 울리는 「챙」 */
+const clang=(at=0,v=1)=>{noise(.05,.6*v,at,'bandpass',3000,0,2,.001);[[540,.5,.16],[1270,.4,.1],[1890,.35,.08],[2710,.28,.06],[3420,.22,.045]].forEach(([f,d,g])=>{tone(f,d,g*v,at,0,.002);tone(f*1.004,d*.9,g*.5*v,at,0,.002)})};
+/* 카랑카랑한 금속 울림: 높고 어긋난 배음이 짧게 */
+const ring=(at=0,v=1,base=2600)=>[[1,.22,.05],[1.48,.18,.035],[2.03,.14,.025],[2.71,.1,.018]].forEach(([k,d,g])=>tone(base*k,d,g*v,at,0,.001));
+/* 부드러운 종: 천천히 시작하고 길게 사라져요 */
+const sbell=(f,at=0,v=.07,a=.03,d=1.2)=>{tone(f,d,v,at,0,a);tone(f*2.003,d*.5,v*.15,at,0,a)};
+/* 바위 부서짐: 짧은 돌 조각 소리 n개를 dur 동안 흩뿌림 (lo~hi Hz) */
+const DK=11/8;
+/* 부서지는 나무: 높고 좁은 「딱·짝」 조각 소리 */
+const wood=(at,v,n,dur,lo=900,hi=2500)=>{for(let i=0;i<n;i++){const t=at+Math.pow(Math.random(),1.5)*dur;noise(.015+Math.random()*.03,v*K9*.6*(1-.5*(t-at)/dur)*(.5+Math.random()*.5),t,'bandpass',lo+Math.random()*(hi-lo),0,6+Math.random()*6,.0005)}};
+/* 짐승 으르렁: 낮은 목울림을 빠르게 떨리게 해서 「그르르」 (f0→f2 음높이, am=떨림 빠르기, lp=밝기) */
+function growl(at,v=.35,dur=.5,f0=65,am=26,lp=320,f2){const c=ac();if(!c)return;const t=c.currentTime+at,o=c.createOscillator(),f=c.createBiquadFilter(),g=c.createGain(),trem=c.createGain(),lfo=c.createOscillator(),lg=c.createGain();
+ o.type='sawtooth';o.frequency.setValueAtTime(f0,t);o.frequency.linearRampToValueAtTime(f2||f0*.85,t+dur);f.type='lowpass';f.frequency.value=lp;f.Q.value=2;
+ lfo.type='sine';lfo.frequency.value=am;lg.gain.value=.5;trem.gain.value=.5;lfo.connect(lg).connect(trem.gain);
+ o.connect(f).connect(trem).connect(g).connect(c.destination);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v*FXVOL,t+.06);g.gain.setValueAtTime(v*FXVOL,t+dur*.6);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+ o.start(t);lfo.start(t);o.stop(t+dur+.05);lfo.stop(t+dur+.05);noise(dur,v*.5,at,'lowpass',lp*.8,0,1,.06)}
+/* 낮은 신음 「으윽」: 목소리처럼 걸러 낸 낮은 소리 (모음 「으」 의 울림 F1·F2) */
+function groan(at,v=1,f0=100,f1=78,dur=.45,fm=[320,1350]){const c=ac();if(!c)return;const t=c.currentTime+at,o=c.createOscillator(),lfo=c.createOscillator(),lg=c.createGain(),g=c.createGain(),mix=c.createGain();
+ o.type='sawtooth';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);lfo.frequency.value=7;lg.gain.value=2.5;lfo.connect(lg).connect(o.frequency);
+ const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1800;o.connect(lp);
+ fm.forEach((f,i)=>{const b=c.createBiquadFilter();b.type='bandpass';b.frequency.value=f;b.Q.value=i?9:5;const bg=c.createGain();bg.gain.value=i?.5:1;lp.connect(b).connect(bg).connect(mix)});
+ mix.connect(g).connect(c.destination);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.9*v*FXVOL,t+.05);g.gain.setValueAtTime(.9*v*FXVOL,t+dur*.5);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+ o.start(t);lfo.start(t);o.stop(t+dur+.05);lfo.stop(t+dur+.05)}
+const crumble=(at,v,n,dur,lo=300,hi=1500)=>{for(let i=0;i<n;i++){const t=at+Math.pow(Math.random(),1.6)*dur;noise(.03+Math.random()*.05,v*DK*(1-.6*(t-at)/dur)*(.5+Math.random()*.5),t,'bandpass',lo+Math.random()*(hi-lo),0,2+Math.random()*3,.001)}};
+const defBase=(low=1,metal=1,L=1)=>{const k=DK;noise(.45*L,1*k*low,0,'lowpass',250,50,.6,.003);ring(0,1.3*k*metal,560);ring(0,.8*k*metal,950);noise(.04,.25*k,0,'bandpass',1400,0,3,.001);tone(55,.35*L,.4*k*low,0,32,.003)};
+const bell=(f,at=0,v=.12)=>{tone(f,.9,v,at,0,.008);tone(f*2.01,.5,v*.25,at,0,.008)};
+/* ===== 효과음 시안: 관리 탭에서 들어 보고 골라요 (config/site 의 sfx {attack, defend, roar} 번호) ===== */
+const K9=9/8;
+const SFXLIB={
+ attack:[
+  ['거칠고 무겁게',()=>{noise(.28,.7*K9,0,'bandpass',500,2800,2,.03);noise(.2,.4*K9,.02,'bandpass',3500,5500,5,.02);noise(.3,1*K9,0,'lowpass',260,70,.7,.01);tone(80,.25,.35*K9,0,45,.01)}]],
+ /* 방어: 더 깊은 쿵 + 와르르 + 중간 바위 갈림 (11%) */
+ defend:[
+  ['중간 바위 갈림',()=>{defBase(1.2,.7,1.3);noise(.65,.8*DK,0,'lowpass',140,40,.6,.003);crumble(.02,.55,8,.45,200,800);noise(.5,.35*DK,0,'bandpass',500,250,1.5,.02)}]],
+ /* 피격 대상 지정: 소나 핑 */
+ roar:[
+  ['소나 핑',()=>{tone(1200,.9,.12,0,1150,.004);tone(1200,.6,.04,.35,1150,.004)}]],
+ /* 회복: 부드러운 종소리 시안 */
+ /* 회복: 요정 가루 + 짧은 바람 */
+ heal:[
+  ['요정 가루 + 짧은 바람',()=>{[1046.5,1318.5,1568,2093].forEach((f,i)=>sbell(f,i*.07,.04,.015,.95));noise(1.2,.07,.05,'bandpass',5000,8000,3,.3);[1568,2093].forEach(f=>sbell(f,.34,.03,.03,1.35));noise(.5,.05,0,'bandpass',700,1200,.8,.15)}]],
+ /* 회피: 바람 가르며 피함 (7%) */
+ evade:[
+  ['바람 가르며 피함',()=>{noise(.4,.35*EK,0,'bandpass',600,2600,1.2,.08)}]],
+ /* 보스가 맞는 소리: 퍼억 + 나무 쩍 (1% 크게: 10%) + 높아졌다 낮아지는 으르렁 (0.5% 작게) */
+ bhit:[
+  ['퍼억 + 나무 쩍 + 으르렁',()=>{const k=10/9;noise(.22,1*K9*k,0,'lowpass',600,100,.8,.012);tone(95,.2,.35*K9*k,0,50,.01);wood(.02,k,8,.25);growl(.08,.35*7.5/8,.6,85,28,350,55)}]]};
+
+
+
+
+
+const SFXDEF={attack:0,defend:0,roar:0,heal:0,evade:0,bhit:0};const EK=7/8;
+const SFXKEY={defend:'defendC',roar:'roarB',heal:'healC',evade:'evadeB',bhit:'bhitD'}; /* 시안을 새로 만들면 예전 선택이 엉뚱한 번호로 가지 않게 새 이름으로 저장 */
+/* at 초 뒤에, v 배 크기로 (지금 FXVOL 을 잠시 바꿔서) */
+const sfxPick=(k,at=0,v=1)=>{const L=SFXLIB[k],i=+(cfg.sfx?.[SFXKEY[k]||k]??SFXDEF[k]),f=(L[i]||L[0])[1];if(!at&&v===1)return f();setTimeout(()=>{const o=FXVOL;FXVOL*=v;try{f()}finally{FXVOL=o}},at*1000)};
+const SFX={hit:()=>{punch(0,1.15);punch(.03,.5)},
+ attack:()=>{sfxPick('attack');sfxPick('bhit',.07)},
+ crit:()=>{sfxPick('attack');sfxPick('bhit',.07,1.35)},
+ miss:()=>{noise(.25,.25,0,'bandpass',1800,900,.8,.04)},
+ evade:()=>sfxPick('evade'),
+ defend:()=>sfxPick('defend'),
+ heal:()=>sfxPick('heal'),
+ buff:()=>{tone(392,.35,.15,0,523,.04);bell(784,.15,.06)},
+ debuff:()=>{tone(330,.4,.15,0,220,.04)},
+ roar:()=>sfxPick('roar'),
+ win:()=>{[523.3,659.3,784,1046.5].forEach((f,i)=>bell(f,i*.14,.11))},
+ lose:()=>{[392,329.6,261.6].forEach((f,i)=>tone(f,.6,.14,i*.22,0,.05))}};
+const VIB={hit:[60,40,90],crit:[40],attack:[25],defend:[30],evade:[15],heal:[15,30,15],roar:[100],win:[40,60,40,60,120],lose:[200]};
+const FXCLS={hit:'fx-hit',crit:'fx-hit',attack:'fx-hit',heal:'fx-heal',buff:'fx-heal',defend:'fx-guard',evade:'fx-guard',debuff:'fx-guard',roar:'fx-warn'};
+const buzz=p=>{try{fxOpt.vib&&navigator.vibrate?.(p)}catch(e){}};
+function pFx(){const P=party;if(!P)return;const L=Object.entries(P.log||{});if(!pSeen){pSeen=new Set(L.map(([k])=>k));return}
+ const fresh=L.filter(([k])=>!pSeen.has(k)).sort((a,b)=>a[1].ts-b[1].ts);fresh.forEach(([k])=>pSeen.add(k));
+ const mineIds=new Set(pMembers(P).filter(([,m])=>m.owner===acct).map(([id])=>id));let delay=0;
+ for(const [,x] of fresh){const f=x.fx;if(!f)continue;setTimeout(()=>{
+  if(fxOpt.sfx)try{actx?.state==='suspended'&&actx.resume();SFX[f.k]?.()}catch(e){}
+  const me1=(f.to||[]).some(t=>mineIds.has(t))||f.k==='win'||f.k==='lose'||(f.to||[]).includes('boss')&&x.t.startsWith(P.members?.[[...mineIds][0]]?.name||'\u0000');if(me1&&VIB[f.k])buzz(VIB[f.k]);
+  const cls=FXCLS[f.k];if(cls)for(const t of f.to||[]){const el=t==='boss'?$('#pbossbar'):document.querySelector(`.pmem[data-mid="${CSS.escape(t)}"]`);if(el){el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls)}}},delay);delay+=220}}
 /* ---- 화면 ---- */
 function renderBattle(){const el=$('#battle');if(!el)return;const r=raids.find(x=>x.id===raidView),c=myChar();if(!r){el.innerHTML='';return}
  if(partyRid!==r.id)watchParty(r.id);
  const P=party,ms=pMembers(P),mm=pMine(P),max=partyMax(r),st=P?.state||'recruit',now=Date.now();
  const logs=Object.values(P?.log||{}).sort((a,b)=>a.ts-b.ts).slice(-40).map(x=>`<p class="${esc(x.cls)}">${esc(x.t)}</p>`).join('');
- const mrow=(id,m)=>{const on=P?.order?.[P.turn]===id&&st==='battle';return `<div class="pmem${on?' on':''}${alive(m)||st!=='battle'?'':' down'}">${av(charMap()[id]||{name:m.name},'s')}<div class="sp"><div class="row" style="gap:6px"><b>${esc(m.name)}</b>${m.owner===acct?'<span class="meta">(나)</span>':''}${st==='recruit'?`<span class="${m.ready?'title':'meta'}">${m.ready?'준비 완료':'대기 중'}</span>`:''}${m.cover?'<span class="meta">· 대신 맞기</span>':''}${m.charm?'<span class="meta">· 부적</span>':''}${(+m.joinedRound||1)>(+P?.round||0)&&st==='battle'?'<span class="meta">· 다음 라운드부터</span>':''}</div>
-  <div class="xp" style="height:4px;margin:4px 0 0"><b style="width:${Math.max(0,(+m.hp||0)/(+m.maxHp||1)*100)}%;background:var(--ok)"></b></div></div><span class="meta" style="white-space:nowrap">${+m.hp||0} / ${+m.maxHp||0}</span></div>`};
+ const mrow=(id,m)=>{const on=P?.order?.[P.turn]===id&&st==='battle';return `<div class="pmem${on?' on':''}${alive(m)||st!=='battle'?'':' down'}" data-mid="${esc(id)}">${av(charMap()[id]||{name:m.name},'s')}<div class="sp"><div class="row" style="gap:6px"><b>${esc(m.name)}</b>${m.owner===acct?'<span class="meta">(나)</span>':''}${st==='recruit'?`<span class="${m.ready?'title':'meta'}">${m.ready?'준비 완료':'대기 중'}</span>`:''}${m.cover?'<span class="meta">· 대신 맞기</span>':''}${m.charm?'<span class="meta">· 부적</span>':''}${(+m.joinedRound||1)>(+P?.round||0)&&st==='battle'?'<span class="meta">· 다음 라운드부터</span>':''}</div>
+  <div class="xp" style="height:4px;margin:4px 0 0"><b style="width:${Math.max(0,(+m.hp||0)/(+m.maxHp||1)*100)}%;background:${hpCol(m.hp,m.maxHp)}"></b></div></div><span class="meta" style="white-space:nowrap">${+m.hp||0} / ${+m.maxHp||0}</span></div>`};
  if(r.status!=='active'&&st!=='battle'){el.innerHTML=P&&ms.length?`<div class="battle"><h3>마지막 파티</h3>${ms.map(([id,m])=>mrow(id,m)).join('')}</div>`:'';return}
  let body='';
  if(st==='recruit'){const todayOther=c&&raids.some(x=>x.id!==r.id&&x.participants?.[c.id]?.day===kday());
@@ -1412,21 +1534,21 @@ function renderBattle(){const el=$('#battle');if(!el)return;const r=raids.find(x
     act=meT?`<p><b>${B.area?'광범위 공격!':'내가 노려졌다!'}</b> 어떻게 막을까요?</p><div class="row"><button class="btn" data-p="evade">회피 <span class="meta">(민첩 · 난이도 ${8+bs.agi})</span></button><button class="btn" data-p="defend">방어 <span class="meta">(방어 · 난이도 ${6+bs.atk})</span></button></div>`
      :`<p class="meta">${B.targets.filter(id=>!B.resp?.[id]).map(id=>esc(P.members[id]?.name||'?')).join(', ')||'모두'}의 대응을 기다리는 중…</p>`}}
   else if(mm&&actor===mm[0]){const sk=charMap()[mm[0]]?.skills||[],bs=bossStats(r);
-   act=`<p><b>${esc(mm[1].name)}의 차례.</b> 행동을 하나 고르세요.</p><div class="row"><button class="btn" data-p="attack">공격 <span class="meta">(난이도 ${8+bs.def})</span></button><button class="btn ghost" data-p="heal">회복</button>
+   act=`<p><b>${esc(mm[1].name)}의 차례.</b> 행동을 하나 고르세요.</p><div class="row"><button class="btn" data-p="attack">공격 <span class="meta">(난이도 ${8+bs.def})</span></button><button class="btn ghost" data-p="heal">회복 <span class="meta">(나 또는 동료)</span></button>
     ${sk.map((s,i)=>`<button class="btn ghost" data-p="skill:${i}" ${mm[1].used?.[i]?'disabled':''} title="${esc(SKTYPES[s.type]||'')}">${esc(s.name)}${mm[1].used?.[i]?' (사용함)':''}</button>`).join('')}</div>`}
   else act=`<p class="meta">${esc(P.members[actor]?.name||'?')}의 차례를 기다리는 중…</p>`;
   if(stale&&mm&&!pRoll)act+=`<div class="row" style="margin-top:8px"><span class="sp meta">1분 넘게 진행이 없어요</span><button class="btn ghost small" data-p="skip">차례 넘기기</button></div>`;
   const items=mm&&c?inv(charMap()[mm[0]]||c):{};
   body=`<div class="row" style="margin-bottom:8px"><h3 class="sp">${+P.round}라운드</h3><span class="meta">순서: ${P.order.map((id,i)=>`<span class="${i===P.turn?'title':''}">${esc(id==='boss'?r.name:P.members[id]?.name||'?')}</span>`).join(' → ')}</span></div>
-   <div class="row" style="font-size:13.5px"><span class="sp">${esc(r.name)}</span><span>${bhp} / ${+r.maxHp}</span></div><div class="xp" style="height:5px;margin-bottom:10px"><b style="width:${bhp/(+r.maxHp||1)*100}%;background:var(--red)"></b></div>
+   <div class="row" style="font-size:13.5px"><span class="sp">${esc(r.name)}</span><span>${bhp} / ${+r.maxHp}</span></div><div class="xp" id="pbossbar" style="height:5px;margin-bottom:10px"><b style="width:${bhp/(+r.maxHp||1)*100}%;background:var(--red)"></b></div>
    <div class="pmems">${ms.map(([id,m])=>mrow(id,m)).join('')}</div>
-   <div class="btlog">${logs}</div>${act}
+   <div class="btlog">${logs}</div>${act}${pRoll?'':targetBox()}
    <div class="row items">${mm?`<span class="meta">아이템</span>${Object.keys(ITEMS).filter(k=>items[k]>0&&ITEMS[k].kind!=='sell').map(k=>`<button class="btn ghost small" data-p="item:${k}" title="${esc(ITEMS[k].desc)}">${esc(ITEMS[k].name)} ${items[k]}</button>`).join('')||'<span class="meta">없음</span>'}<span class="sp"></span><button class="btn ghost small" data-p="leave">파티 나가기</button>`
     :`<span class="meta sp">전투 중이에요. 자리가 있으면 들어가서 다음 라운드부터 함께 싸울 수 있어요.</span>${c&&ms.length<max&&!raids.some(x=>x.id!==r.id&&x.participants?.[c.id]?.day===kday())&&hpState(c).cur>0?'<button class="btn small" data-p="join">파티 참가</button>':''}`}</div>`;
   if(pRoll&&autoRoll&&!pRoll.rolling&&!renderBattle.t)renderBattle.t=setTimeout(()=>{renderBattle.t=0;pDoRoll()},450)}
  else if(st==='done')body=`<h3>${P.endKind==='kill'?'토벌 성공!':'파티 퇴각'}</h3><div class="pmems">${ms.map(([id,m])=>mrow(id,m)).join('')}</div><div class="btlog">${logs}</div>
   <div class="row"><span class="sp meta">${r.status==='active'?'새 파티를 모아 다시 도전할 수 있어요.':''}</span>${r.status==='active'?'<button class="btn" data-p="reset">새 파티 모집</button>':''}</div>`;
- el.innerHTML=`<div class="battle"><div class="row" style="justify-content:flex-end;margin-bottom:6px">${autoBox()}</div>${body}</div>`;
+ el.innerHTML=`<div class="battle"><div class="row" style="justify-content:flex-end;margin-bottom:6px;gap:8px"><button class="btn ghost small" data-p="sfx" aria-pressed="${fxOpt.sfx}">효과음 ${fxOpt.sfx?'켜짐':'꺼짐'}</button><button class="btn ghost small" data-p="vib" aria-pressed="${fxOpt.vib}">진동 ${fxOpt.vib?'켜짐':'꺼짐'}</button>${autoBox()}</div>${body}</div>`;
  const lg=el.querySelector('.btlog');if(lg)lg.scrollTop=lg.scrollHeight}
 /* 화면이 다시 그려지지 않아도 보스 차례·시작을 놓치지 않도록 2초마다 확인 */
 setInterval(()=>{if(view()!=='raid'||!party||!partyRid)return;const P=party,mm=pMine(P),ms=pMembers(P);if(!mm)return;
@@ -1434,10 +1556,16 @@ setInterval(()=>{if(view()!=='raid'||!party||!partyRid)return;const P=party,mm=p
  else if(P.state==='battle'&&P.order?.[P.turn]==='boss'&&!(P.bossAtk&&P.bossAtk.step===P.step)&&ms.find(([,m])=>alive(m))?.[1].owner===acct)pBossAct()},2000);
 $('#v-raid').addEventListener('click',e=>{const t=e.target.closest('[data-p]');if(!t)return;const a=t.dataset.p;
  if(a==='join')pJoin();else if(a==='ready')pReady();else if(a==='leave')pLeave();else if(a==='reset')pReset();else if(a==='roll')pDoRoll();else if(a==='skip')pSkip();
- else if(a==='evade'||a==='defend')pRespond(a);else if(a.startsWith('item:'))pItem(a.slice(5));else pAct(a)});
+ else if(a==='evade'||a==='defend')pRespond(a);else if(a==='tcancel'){pTarget=null;renderBattle()}else if(a.startsWith('item:')){const [,k,to]=a.split(':');pItem(k,to)}else if(a==='sfx'||a==='vib'){fxOpt[a]=!fxOpt[a];store('fx_'+a,fxOpt[a]);renderBattle();if(a==='vib'&&fxOpt.vib)buzz([30])}else pAct(a)});
 
 
 
+/* 레이드 토벌 증표: 토벌한 레이드에 참여한 캐릭터마다 1개 (저장 없이 레이드 기록에서 계산) */
+const trophies=c=>c?raids.filter(r=>r.status==='cleared'&&+r.participants?.[c.id]?.count>0).map(r=>({id:r.id,n:r.name+' 토벌 증표',ts:r.clearedAt||r.createdAt})):[];
+function raidRewardHTML(r){if(r?.status!=='cleared')return'';const m=charMap(),ps=Object.entries(r.participants||{}).filter(([,p])=>+p.count>0).map(([id])=>id);
+ const who=ids=>ids.map(id=>`<button class="ment" data-c="${esc(id)}">@${esc(m[id]?.name||'떠난 모험가')}</button>`).join(' ');
+ const drops={};for(const id of ps){const t=dropFor(r,id);if(t&&titleObj(t))(drops[t]=drops[t]||[]).push(id)}
+ return `<div class="rew"><p>토벌 참여 전원 <b>경험치 +${RAIDREW.exp}</b> · <b>골드 +${RAIDREW.gold}</b></p>${ps.length?`<p>${who(ps)} <span class="gold">「${esc(r.name)} 토벌 증표」</span></p>`:''}${Object.entries(drops).map(([t,ids])=>`<p>${who(ids)} ${chipOf(titleObj(t))}</p>`).join('')}</div>`}
 /* ---- 보관함 창: 아이템 + 판매용 전리품. 끌어서 옮기고 오른쪽 아래 모서리로 크기 조절 ---- */
 const GLYPH={heal:'<path d="M10 3h4v3l2 2v11a2 2 0 01-2 2h-4a2 2 0 01-2-2V8l2-2z" fill="#e07a7a55" stroke="#e07a7a"/><path d="M10 13h4M12 11v4" stroke="#fff"/>',
  atk:'<path d="M5 19l9-9M14 4l6 0 0 6-6 6-6-6z" stroke="#ffd27a" fill="#ffd27a33"/><path d="M4 20l3-3" stroke="#ffd27a"/>',
@@ -1445,7 +1573,7 @@ const GLYPH={heal:'<path d="M10 3h4v3l2 2v11a2 2 0 01-2 2h-4a2 2 0 01-2-2V8l2-2z
  sell:'<path d="M6 9l6-5 6 5-6 11z" stroke="#c4b5ff" fill="#c4b5ff33"/>'};
 const itemGlyph=kind=>`<svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linejoin="round">${GLYPH[kind?.startsWith('heal')?'heal':kind]||GLYPH.sell}</svg>`;
 const itemIcon=(k,sz)=>{const it=ITEMS[k];return `<span class="ico"${sz?` style="width:${sz}px;height:${sz}px"`:''}>${it?.img?`<img alt="" src="${esc(blob(it.img))}">`:itemGlyph(it?.kind)}</span>`};
-const bagCount=c=>{const v=inv(c);return Object.keys(ITEMS).reduce((a,k)=>a+(v[k]||0),0)+(Array.isArray(c?.bag)?c.bag.length:0)};
+const bagCount=c=>{const v=inv(c);return Object.keys(ITEMS).reduce((a,k)=>a+(v[k]||0),0)+(Array.isArray(c?.bag)?c.bag.length:0)+trophies(c).length};
 let bagCid=null;
 function openBag(id){bagCid=id||me;const w=$('#bagwin'),g=store('bagwin');w.hidden=false;
  if(g){Object.assign(w.style,{left:g.x+'px',top:g.y+'px',width:g.w+'px',height:g.h+'px'})}else{const W=Math.min(460,innerWidth-24),H=Math.min(540,innerHeight-40);Object.assign(w.style,{left:Math.max(12,innerWidth-W-330)+'px',top:'80px',width:W+'px',height:H+'px'})}
@@ -1460,6 +1588,7 @@ function renderBag(){const w=$('#bagwin');if(w.hidden)return;const c=charMap()[b
    ${can?`<div class="row" style="gap:4px">${it.heal?`<button class="btn ghost small" data-bagpot="${k}">사용</button>`:''}${+it.value>0?`<button class="btn ghost small" data-bagsell="${k}">${+it.value}골드에 판매</button>`:''}</div>`:''}</div>`}).join('')}</div>`:'<p class="meta">가진 아이템이 없어요.</p>'}
   <div class="row" style="margin:16px 0 8px"><h3 class="sp">전리품 <span class="meta">${bag.length}개 · ${tot}골드어치</span></h3>${can&&bag.length?`<button class="btn ghost small" data-baglsell="*">모두 판매</button>`:''}</div>
   ${bag.length?`<div class="tlist">${bag.map(x=>`<div class="trow">${lootHTML(x)}<span class="meta sp">${esc(DG[x.d]?.name||'')}</span>${can?`<button class="btn ghost small" data-baglsell="${esc(x.id)}">판매</button>`:''}</div>`).join('')}</div>`:'<p class="meta">던전 탐색에서 얻은 전리품이 여기에 쌓여요.</p>'}
+  ${(()=>{const tr=trophies(c);return tr.length?`<h3 style="margin:16px 0 8px">토벌 증표 <span class="meta">${tr.length}개</span></h3><div class="tlist">${tr.map(x=>`<div class="trow"><span class="loot r5">${esc(x.n)}</span><span class="meta sp">${x.ts?when(x.ts):''}</span><button class="btn ghost small" data-raid="${esc(x.id)}">기록 보기</button></div>`).join('')}</div>`:''})()}
   ${can?'':'<p class="note" style="margin-top:12px">다른 사람의 보관함은 볼 수만 있어요.</p>'}`}
 $('#bagx').addEventListener('click',()=>{$('#bagwin').hidden=true});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#bagwin').hidden&&!document.querySelector('dialog[open]'))$('#bagwin').hidden=true});
@@ -1530,7 +1659,7 @@ $('#txreset').addEventListener('click',async e=>{const b=e.currentTarget,o=$('#t
 $('#treset').addEventListener('click',async e=>{const b=e.currentTarget;if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='한 번 더 누르면 초기화';return}b.dataset.arm='';b.textContent='오늘 던전 탐색 초기화 (내 계정)';
  try{const ids=exHist.filter(x=>x.id==='explore-'+kday()||x.status==='active').map(x=>x.id);for(const id of ids)await exCol().doc(id).delete();toast('오늘 탐색을 초기화했어요')}catch(err){toast('초기화하지 못했어요')}});
 $('#traid').addEventListener('click',async()=>{const mineIds=myChars().map(c=>c.id);let n=0;
- try{for(const r of raids.filter(x=>x.status==='active')){const p={};for(const id of mineIds)if(r.participants?.[id]?.lastDay===kday())p[id]={lastDay:''};if(Object.keys(p).length){await db.doc('raids/'+r.id).update({participants:p});n++}}toast(n?'오늘 레이드 참여를 초기화했어요':'초기화할 참여 기록이 없어요')}catch(err){toast('초기화하지 못했어요')}});
+ try{for(const r of raids){const p={};for(const id of mineIds){const x=r.participants?.[id];if(x&&(x.day===kday()||x.lastDay===kday()))p[id]={day:'',lastDay:''}}if(Object.keys(p).length){await db.doc('raids/'+r.id).update({participants:p});n++}}toast(n?'오늘 레이드 참여를 초기화했어요':'초기화할 참여 기록이 없어요')}catch(err){toast('초기화하지 못했어요')}});
 $('#theal').addEventListener('click',async()=>{try{for(const c of myChars())if(c.hp!=null)await patchChar(c,{hp:null,hpAt:null});toast('내 캐릭터 체력을 모두 회복했어요')}catch(err){toast('회복하지 못했어요')}});
 
 
