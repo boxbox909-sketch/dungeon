@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>모험가 길드</title>
+<script src="config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -200,6 +201,9 @@ dialog.cfm{max-width:min(440px,92vw)}
 .bossrow{display:flex;flex-wrap:wrap;gap:12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px}
 .bossrow img{width:128px;aspect-ratio:16/9;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
 .tpick{display:inline-flex;gap:5px;align-items:center;margin:0;color:var(--ink);cursor:pointer}.tpick input{width:auto}
+.pmems{display:grid;gap:6px;margin:10px 0}
+.pmem{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:14px}
+.pmem.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}.pmem.down{opacity:.45}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:20;display:none;padding:10px 16px}
 .lb img{display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:6px}
 .fade{animation:in .35s ease}@keyframes in{from{opacity:0;transform:translateY(4px)}}@media(prefers-reduced-motion:reduce){.fade{animation:none}}
@@ -486,22 +490,14 @@ async function removeChar(c){const raw=charDocs[c._doc]||{};
  const alts={...(raw.alts||{})};delete alts[c.id];return db.doc('chars/'+c._doc).set({...raw,alts})}
 function pickActive(){const list=myChars();let id=store('activeChar:'+acct);if(!list.some(c=>c.id===id))id=list[0]?.id||null;
  if(id!==me){me=id;subRooms();room?.presence({cid:me||null}).catch(()=>{})}}
-function setActive(id){if(!mine(id)||id===me)return;if(bt&&bt.phase!=='end')return toast('전투 중에는 캐릭터를 바꿀 수 없어요');
- store('activeChar:'+acct,id);bt=null;pickActive();activeRoom=null;unsubRoom?.();roomMsgs=[];renderAll();toast((myChar()?.name||'')+'(으)로 활동해요')}
+function setActive(id){if(!mine(id)||id===me)return;if(party?.state==='battle'&&pMine(party)?.[0]===me&&alive(pMine(party)[1]))return toast('레이드 전투 중에는 캐릭터를 바꿀 수 없어요');
+ store('activeChar:'+acct,id);pRoll=null;pickActive();activeRoom=null;unsubRoom?.();roomMsgs=[];renderAll();toast((myChar()?.name||'')+'(으)로 활동해요')}
 function subRooms(){unsubRooms?.();unsubRooms=null;rooms=[];if(!db||!me){renderRooms();return}
  unsubRooms=db.collection('rooms').where('members','array-contains',me).onSnapshot(s=>{rooms=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.last||0)-(a.last||0));renderRooms();renderHome()},()=>{})}
 /* ===== 배포 설정: claude.ai 밖(내 홈페이지)에서 열 때만 쓰여요 =====
-   1) Firebase 콘솔의 웹 앱 설정값을 FIREBASE_CONFIG 에 붙여 넣어요.
-   2) 처음 로그인하면 화면에 「내 계정 코드」가 보여요. 그 값을 OWNER_UID 에 넣어 다시 올리면 주인(관리자)이 돼요. */
-const FIREBASE_CONFIG={
-  apiKey: "AIzaSyAWtJE6qWmiVVDHOuJ6qti_v2bOPHqwDHo",
-  authDomain: "dungeon-aa7f7.firebaseapp.com",
-  projectId: "dungeon-aa7f7",
-  storageBucket: "dungeon-aa7f7.firebasestorage.app",
-  messagingSenderId: "495936253684",
-  appId: "1:495936253684:web:f0a67dbd515ed03744f8a1"
-}; /* 예: {apiKey:"...",authDomain:"...",projectId:"...",appId:"..."} */
-const OWNER_UID='OMJII6MdXVRIj1tJii0A4sAPBVn1';
+   설정은 index.html 옆의 config.js 에 따로 적어요. 그래서 index.html 을 새 버전으로 바꿔도 설정이 지워지지 않아요. */
+const FIREBASE_CONFIG=window.GUILD_CONFIG?.firebase||null; /* 홈페이지에서는 config.js 의 값을 써요 */
+const OWNER_UID=window.GUILD_CONFIG?.owner||'';
 const FB_VER='10.14.1';
 let MODE='claude';
 
@@ -921,7 +917,7 @@ function drawSkills(){if(!$('#sktype').options.length)$('#sktype').innerHTML=Obj
 $('#skadd').addEventListener('click',()=>{const name=$('#skname').value.trim();if(!name)return toast('스킬 이름을 적어 주세요');
  draftSkills.push({name,type:$('#sktype').value,power:Math.max(1,Math.min(20,+$('#skpow').value||1)),desc:$('#skdesc').value.trim()});$('#skname').value=$('#skdesc').value='';drawSkills()});
 $('#askills').addEventListener('click',e=>{const b=e.target.closest('[data-skdel]');if(b){draftSkills.splice(+b.dataset.skdel,1);drawSkills()}});
-$('#fcls').addEventListener('input',setPrev);
+$('#fcls').addEventListener('change',setPrev);
 $('#fhead').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)openCrop(f)});
 
 /* ---- 두상 이미지 자르기 (120×120 / 200×200) ---- */
@@ -1186,10 +1182,10 @@ async function exRoll(){const d=exDoc;if(!d||d.status!=='active'||exBusy)return;
   else{st.dmg=3+d6()+i+Math.max(0,DG[d.dkey]?.dc||0);hp=Math.max(0,hp-st.dmg)}
   st.boss=hp>0&&i>=1&&i<4&&!raids.some(x=>x.status==='active')&&Math.random()<BOSSCHANCE;
   const stages=d.stages.slice();stages[i]=st;await sleep(250);await exRef().update({stages,hp,gained:g})}
- catch(e){toast('판정을 저장하지 못했어요')}exBusy=false}
+ catch(e){toast('판정을 저장하지 못했어요')}exBusy=false;renderExplore()}
 async function exNext(){const d=exDoc,s=d?.stages[d.stage];if(!s?.roll||exBusy)return;
  if(d.hp<=0)return exFinish('retreat');if(s.boss)return exFinish('boss');if(d.stage+1>=d.stages.length)return exFinish('clear');
- exBusy=true;try{await exRef().update({stage:d.stage+1})}catch(e){toast('저장하지 못했어요')}exBusy=false}
+ exBusy=true;try{await exRef().update({stage:d.stage+1})}catch(e){toast('저장하지 못했어요')}exBusy=false;renderExplore()}
 async function exFinish(kind){const d=exDoc;if(exBusy||d.status==='done')return;exBusy=true;renderExplore();
  try{const g={...d.gained,items:{...(d.gained?.items||{})},loot:[...(d.gained?.loot||[])],bag:[...(d.gained?.bag||[])]};
   if(kind==='clear'){g.exp+=20;g.gold+=15;g.clearLoot=makeLoot(d.dkey||'goblin',5,true,d.treasure);g.bag.push(g.clearLoot)}
@@ -1233,7 +1229,7 @@ function pastExplores(){const list=exHist.filter(x=>x.day!==kday()&&x.status==='
  const E={clear:'완료',retreat:'후퇴',boss:'보스 출몰'};
  return `<h3 style="margin-top:20px">지난 탐색</h3>${list.map(x=>`<div class="evmini"><span>${esc(x.day)} · ${esc(dgOf(x).name)} · ${esc(x.title)}</span><span class="meta">${E[x.end]||'중단'} · 경험치 +${+x.gained?.exp||0} · 골드 +${+x.gained?.gold||0}${(x.gained?.bag||[]).length?` · 전리품 ${x.gained.bag.length}개`:''}</span></div>`).join('')}`}
 $('#v-events').addEventListener('click',async e=>{const pb=e.target.closest('[data-expot]');if(pb){const k=pb.dataset.expot,c=exChar(),d=exDoc;if(!d||d.status!=='active'||exBusy||inv(c)[k]<=0)return;exBusy=true;
-  try{await spendItem(k,c);await exRef().update({hp:Math.min(d.maxHp,d.hp+healAmt(k,d.maxHp))});toast(`${ITEMS[k].name}을(를) 마셨어요`)}catch(err){toast('아이템을 쓰지 못했어요')}exBusy=false;return}
+  try{await spendItem(k,c);await exRef().update({hp:Math.min(d.maxHp,d.hp+healAmt(k,d.maxHp))});toast(`${ITEMS[k].name}을(를) 마셨어요`)}catch(err){toast('아이템을 쓰지 못했어요')}exBusy=false;renderExplore();return}
  const dg=e.target.closest('[data-dungeon]');if(dg)return startExplore(dg.dataset.dungeon);
  const t=e.target.closest('#exroll,#exnext');if(!t)return;
  if(t.id==='exroll')exRoll();else exNext()});
@@ -1252,7 +1248,7 @@ function renderRaidCards(){const el=$('#raidcards');if(!el)return;const act=raid
  el.innerHTML=(act.length?act.map(r=>`<button class="bosscard" data-raid="${esc(r.id)}" aria-label="${esc(r.name)} 레이드 참여"><img alt="${esc(r.name)}" src="${esc(bossImg(r))}"></button>`).join('')
   :'<div class="empty" style="padding:22px">아직 출몰한 보스가 없어요. 던전 탐색 중 낮은 확률로 나타나요.</div>')
   +(done.length?`<h3 style="margin:18px 0 8px">토벌한 보스</h3><div class="donecards">${done.map(r=>`<button class="bosscard done" data-raid="${esc(r.id)}" aria-label="${esc(r.name)} 토벌 기록"><img alt="" src="${esc(bossImg(r))}"><span>토벌 완료</span></button>`).join('')}</div>`:'')}
-function goRaid(id){raidView=id;bt=bt&&bt.raid===id?bt:null;unsubLog?.();raidLogs=[];
+function goRaid(id){raidView=id;pRoll=null;unsubLog?.();raidLogs=[];if(db)watchParty(id);
  unsubLog=db?.collection('raids/'+id+'/log').orderBy('ts','desc').limit(30).onSnapshot(s=>{raidLogs=s.docs.map(d=>d.data());renderRaid()},()=>{});go('raid')}
 function renderRaid(){if(view()!=='raid')return;const r=raids.find(x=>x.id===raidView),el=$('#raidview');
  if(!r){el.innerHTML='<div class="empty">레이드를 찾을 수 없어요.</div>';$('#raidact').innerHTML='';return}
@@ -1263,7 +1259,7 @@ function renderRaid(){if(view()!=='raid')return;const r=raids.find(x=>x.id===rai
   <div><div class="title">${r.status==='cleared'?'토벌 완료':'보스 레이드 · 진행 중'}</div><h1 style="font-size:30px">${esc(r.name)}</h1>${r.rec||BOSSES[r.boss]?.rec?`<span class="tchip" style="background:rgba(255,255,255,.08);color:var(--ink)">${esc(r.rec||BOSSES[r.boss].rec)}</span>`:''}<div class="meta">${esc(r.dungeon||'')} 에서 출몰 · ${when(r.createdAt)}</div>
    <div class="row" style="margin-top:12px"><span class="sp">보스 체력</span><span>${hp} / ${+r.maxHp}</span></div><div class="xp" style="height:6px"><b style="width:${hp/(+r.maxHp||1)*100}%;background:var(--red)"></b></div>
    <div class="kv"><div><b>${bs.agi}${dn('agi')}</b><span>민첩</span></div><div><b>${bs.atk}${dn('atk')}</b><span>공격력</span></div><div><b>${bs.def}${dn('def')}</b><span>방어력</span></div></div>
-   <p class="note">${r.status==='cleared'?`토벌에 참여한 모두에게 경험치 ${RAIDREW.exp} · 골드 ${RAIDREW.gold} · 「${esc(r.name)} 토벌 증표」가 주어졌고, 일부는 낮은 확률로 칭호를 얻었어요.`:`지금은 한 사람이 하루에 한 번, 한 라운드씩 전투해요. 쓰러뜨리면 참여자 전원이 경험치 ${RAIDREW.exp} · 골드 ${RAIDREW.gold} · 토벌 증표를 받고, 낮은 확률로 칭호도 얻어요.`}</p></div></div>
+   <p class="note">${r.status==='cleared'?`토벌에 참여한 모두에게 경험치 ${RAIDREW.exp} · 골드 ${RAIDREW.gold} · 「${esc(r.name)} 토벌 증표」가 주어졌고, 일부는 낮은 확률로 칭호를 얻었어요.`:`파티를 모아 함께 싸워요. 캐릭터마다 하루에 레이드 한 곳만 참여할 수 있고, 같은 레이드에는 몇 번이든 다시 도전할 수 있어요. 쓰러뜨리면 참여자 전원이 경험치 ${RAIDREW.exp} · 골드 ${RAIDREW.gold} · 토벌 증표를 받고, 낮은 확률로 칭호도 얻어요.`}</p></div></div>
   <div id="battle"></div>
   <div class="raidcols"><div><h3>참여자</h3>${ps.length?ps.map(([id,p])=>`<div class="evmini"><button class="who row" data-c="${esc(id)}" style="gap:6px">${av(m[id],'s')}${esc(m[id]?.name||'떠난 모험가')}</button><span class="meta">피해 ${+p.dmg||0} · ${+p.count||0}회${(()=>{const t=titleObj(dropFor(r,id));return t?' · 칭호 획득 ':''})()}</span>${(()=>{const t=titleObj(dropFor(r,id));return t?chipOf(t):''})()}</div>`).join(''):'<p class="meta">아직 아무도 싸우지 않았어요.</p>'}</div>
   <div><h3>전투 기록</h3>${raidLogs.length?raidLogs.map(x=>`<div class="evmini"><span>${esc(m[x.by]?.name||'떠난 모험가')}: ${esc(x.text)}</span><span class="meta">${when(x.ts)}</span></div>`).join(''):'<p class="meta">기록이 없어요.</p>'}</div></div>`;
@@ -1271,85 +1267,153 @@ function renderRaid(){if(view()!=='raid')return;const r=raids.find(x=>x.id===rai
 $('#raidact').addEventListener('change',async e=>{if(e.target.id!=='raidimg')return;const f=e.target.files[0];if(!f||!assets)return;
  try{const {id}=await assets.upload(f);await db.doc('raids/'+raidView).update({img:id});toast('보스 이미지를 바꿨어요')}catch(err){toast('이미지를 올리지 못했어요')}});
 
-/* ---- 전투: 지금은 1일 1회 · 1라운드. 라운드 진행 방식은 이후 여러 명 턴제로 확장 ---- */
-function btLine(t,cls=''){bt.lines.push({t,cls})}
-function renderBattle(){const el=$('#battle');if(!el)return;const r=raids.find(x=>x.id===raidView),c=myChar();
- if(!r||r.status!=='active'){el.innerHTML='';return}
- if(!bt||bt.raid!==r.id){const p=r.participants?.[me];
-  el.innerHTML=`<div class="battle"><div class="row"><div class="sp"><h3>오늘의 전투</h3><p class="note" style="margin:4px 0 0">민첩이 높은 쪽부터 행동해요. 보스의 공격은 회피나 방어 판정으로 막고, 내 차례에는 공격 · 회복 · 특수 스킬 중 하나를 골라요. 아이템은 언제든 쓸 수 있어요.</p></div>
-   ${!c?'<span class="meta">캐릭터를 등록하면 참여할 수 있어요</span>':p?.lastDay===kday()?`<span class="meta">오늘은 이미 싸웠어요. ${left(nextReset()-Date.now())} 뒤에 다시 참여할 수 있어요</span>`:`<button class="btn" id="btstart" ${canWrite?'':'disabled'}>전투 시작</button>`}</div></div>`;return}
- const bs=bossStats(r,bt.deb),bhp=Math.max(0,raidHp(r)-(bt.saved?0:bt.dealt)),items=inv(c),skills=Array.isArray(c.skills)?c.skills:[];
- const who=a=>a==='boss'?esc(r.name):esc(c.name);
- let act='';
- if(bt.phase==='init')act=`<div class="row"><span class="sp">행동 순서: ${bt.order.map(who).join(' → ')}</span><button class="btn" data-bt="go">1라운드 시작</button></div>`;
- else if(bt.phase==='boss')act=`<p><b>${bt.atk.area?`${esc(r.name)}의 광범위 공격!`:`${esc(r.name)}이(가) ${esc(c.name)}을(를) 지목했다!`}</b> 어떻게 막을까요?</p><div class="row"><button class="btn" data-bt="evade">회피 <span class="meta">(민첩 판정 · 난이도 ${8+bs.agi})</span></button><button class="btn" data-bt="defend">방어 <span class="meta">(방어 판정 · 난이도 ${6+bs.atk})</span></button></div>`;
- else if(bt.phase==='char')act=`<p><b>${esc(c.name)}의 차례.</b> 행동을 하나 고르세요.${bt.bonus?' <span class="title">(추가 행동)</span>':''}</p><div class="row"><button class="btn" data-bt="attack">공격 <span class="meta">(난이도 ${8+bs.def})</span></button><button class="btn ghost" data-bt="heal">회복</button>
-  ${skills.map((s,i)=>`<button class="btn ghost" data-bt="skill:${i}" ${bt.used[i]||s.type==='cover'?'disabled':''} title="${esc(SKTYPES[s.type]||'')}">${esc(s.name)}${s.type==='cover'?' (턴제 전환 후)':bt.used[i]?' (사용함)':''}</button>`).join('')}</div>`;
- else if(bt.phase==='roll')act=`<div class="dicebox"><div class="die" id="btdie">?</div><div class="sp"><b>${esc(bt.pending.label)}</b><div class="meta">주사위 + 보정 ${bt.pending.mod} 이(가) 난이도 ${bt.pending.dc} 이상이면 성공</div></div>${autoRoll?'<span class="meta">자동으로 굴리는 중…</span>':'<button class="btn" data-bt="roll">주사위 굴리기</button>'}</div>`;
- else if(bt.phase==='after')act=`<div class="row"><span class="sp"></span><button class="btn" data-bt="next">${bt.idx+1>=bt.order.length?'라운드 마치기':'다음 차례'}</button></div>`;
- else if(bt.phase==='end')act=`<p><b>${{kill:'보스를 쓰러뜨렸다!',down:'쓰러지고 말았다…',done:'1라운드 종료.'}[bt.endKind]}</b> 이번 전투에서 보스에게 준 피해는 ${bt.dealt}이에요.</p>`;
- el.innerHTML=`<div class="battle"><div class="btbars"><div><div class="row"><span class="sp">${esc(c.name)}</span><span>${bt.hp} / ${bt.maxHp}</span></div><div class="xp" style="height:5px"><b style="width:${bt.hp/bt.maxHp*100}%;background:var(--ok)"></b></div></div>
-  <div><div class="row"><span class="sp">${esc(r.name)}</span><span>${bhp} / ${+r.maxHp}</span></div><div class="xp" style="height:5px"><b style="width:${bhp/(+r.maxHp||1)*100}%;background:var(--red)"></b></div></div></div>
-  <div class="row meta" style="margin:8px 0">내 능력치 · 민첩 ${bt.cb.agi} · 공격력 ${bt.cb.atk+bt.buff} · 방어력 ${bt.cb.def} · 회복력 ${bt.cb.heal}${bt.charm?' · 수호 부적 발동 중':''}<span class="sp"></span>${autoBox()}</div>
-  <div class="btlog">${bt.lines.map(x=>`<p class="${x.cls}">${esc(x.t)}</p>`).join('')}</div>${act}
-  ${bt.phase!=='end'?`<div class="row items"><span class="meta">아이템</span>${Object.keys(ITEMS).filter(k=>items[k]>0&&ITEMS[k].kind!=='sell').map(k=>`<button class="btn ghost small" data-bt="item:${k}" title="${esc(ITEMS[k].desc)}">${ITEMS[k].name} ${items[k]}</button>`).join('')||'<span class="meta">가진 아이템이 없어요</span>'}</div>`:''}</div>`;
- const lg=el.querySelector('.btlog');if(lg)lg.scrollTop=lg.scrollHeight;
- if(bt.phase==='roll'&&autoRoll&&!bt.rolling&&!renderBattle.t)renderBattle.t=setTimeout(()=>{renderBattle.t=0;btRoll()},450)}
-async function btStart(){const r=raids.find(x=>x.id===raidView),c=myChar();if(!r||!c||r.participants?.[me]?.lastDay===kday())return;if(hpState(c).cur<=0)return toast(`체력이 없어요. ${hpLine(c)}`);
- const cb=combat(c),bs=bossStats(r);let order;
- if(cb.agi!==bs.agi)order=cb.agi>bs.agi?['me','boss']:['boss','me'];else{let a,b;do{a=d20();b=d20()}while(a===b);order=a>b?['me','boss']:['boss','me']}
- bt={raid:r.id,cid:c.id,cb,hp:hpState(c).cur,startHp:hpState(c).cur,maxHp:cb.hp,buff:0,charm:false,used:{},dealt:0,deb:{agi:0,atk:0,def:0},order,idx:-1,phase:'init',lines:[],bonus:false};
- btLine(`민첩 ${cb.agi} 대 ${bs.agi}. ${order[0]==='me'?c.name+'이(가) 먼저':r.name+'이(가) 먼저'} 움직인다.`);
- try{await db.doc('raids/'+r.id).update({participants:{[me]:{lastDay:kday()}}})}catch(e){bt=null;return toast('전투를 시작하지 못했어요')}
- renderBattle()}
-function btAdvance(){const r=raids.find(x=>x.id===bt.raid);bt.idx++;
- if(bt.idx>=bt.order.length)return btEnd('done');
- if(bt.order[bt.idx]==='boss'){const bs=bossStats(r,bt.deb);bt.atk={area:Math.random()<.3,base:bs.atk+d6()};bt.atk.base-=bt.atk.area?2:0;bt.phase='boss'}
- else bt.phase='char';renderBattle()}
-function btChoose(kind){const r=raids.find(x=>x.id===bt.raid),bs=bossStats(r,bt.deb),cb=bt.cb,c=myChar();
- if(kind==='evade')bt.pending={kind,label:'회피 판정',mod:half(cb.agi),dc:8+bs.agi};
- else if(kind==='defend')bt.pending={kind,label:'방어 판정',mod:half(cb.def)+2,dc:6+bs.atk};
- else if(kind==='attack')bt.pending={kind,label:'공격 판정',mod:half(cb.atk+bt.buff),dc:8+bs.def,bonus:0};
- else if(kind==='heal')bt.pending={kind,label:'회복 판정',mod:half(cb.heal),dc:10};
- else if(kind.startsWith('skill:')){const i=+kind.slice(6),s=(c.skills||[])[i];if(!s||bt.used[i])return;const pw=Math.max(1,+s.power||1);
-  if(s.type==='extra'){bt.used[i]=1;btLine(`${c.name}의 「${s.name}」! 이번 라운드에 한 번 더 행동할 수 있다.`,'good');bt.phase='char';bt.bonus=true;return renderBattle()}
-  if(s.type==='strike'){bt.used[i]=1;bt.pending={kind:'attack',label:`「${s.name}」 공격 판정`,mod:half(cb.atk+bt.buff),dc:8+bs.def,bonus:pw,skill:s.name}}
-  else if(s.type.startsWith('weak_')){bt.used[i]=1;bt.pending={kind:'weak',stat:s.type.slice(5),pw,label:`「${s.name}」 판정`,mod:half(effStats(c).int),dc:10,skill:s.name}}
-  else return}
- bt.bonus=false;bt.phase='roll';renderBattle()}
-async function btRoll(){if(!bt||bt.phase!=='roll'||bt.rolling)return;bt.rolling=true;const p=bt.pending,r=raids.find(x=>x.id===bt.raid),c=myChar(),bs=bossStats(r,bt.deb);
- const roll=await rollDie($('#btdie')),tot=roll+p.mod,ok=roll===20||(roll!==1&&tot>=p.dc),tag=`(주사위 ${roll}+${p.mod}=${tot}, 난이도 ${p.dc})`;
- if(p.kind==='evade'||p.kind==='defend'){
-  if(ok)btLine(`${p.kind==='evade'?'몸을 날려 피했다':'방어 자세로 막아냈다'}! 피해 없음 ${tag}`,'good');
-  else{let dmg=Math.max(0,bt.atk.base-bt.cb.def);if(bt.charm&&dmg>0){bt.charm=false;btLine(`${p.kind==='evade'?'회피':'방어'}에 실패했지만 수호 부적이 공격을 막았다! ${tag}`,'good')}
-   else{bt.hp=Math.max(0,bt.hp-dmg);btLine(`${p.kind==='evade'?'회피':'방어'}에 실패해 ${dmg}의 피해를 입었다 (공격 ${bt.atk.base} - 방어력 ${bt.cb.def}) ${tag}`,'bad')}}}
- else if(p.kind==='attack'){if(ok){let dmg=Math.max(1,bt.cb.atk+bt.buff+d6()+p.bonus-bs.def);if(roll===20)dmg*=2;bt.dealt+=dmg;btLine(`${p.skill?'「'+p.skill+'」 ':''}공격 적중! ${dmg}의 피해${roll===20?' (치명타)':''} ${tag}`,'good')}else btLine(`공격이 빗나갔다 ${tag}`,'bad')}
- else if(p.kind==='heal'){const amt=ok?bt.cb.heal+d6():Math.ceil(bt.cb.heal/2),before=bt.hp;bt.hp=Math.min(bt.maxHp,bt.hp+amt);btLine(`${ok?'회복 성공':'회복이 약하게 들어갔다'}: 체력 +${bt.hp-before} ${tag}`,ok?'good':'')}
- else if(p.kind==='weak'){const N={agi:'민첩',atk:'공격력',def:'방어력'};if(ok){bt.deb[p.stat]-=p.pw;btLine(`「${p.skill}」 성공! 보스의 ${N[p.stat]}이(가) ${p.pw} 내려갔다 ${tag}`,'good')}else btLine(`「${p.skill}」이(가) 통하지 않았다 ${tag}`,'bad')}
- bt.rolling=false;bt.phase='after';
- if(bt.hp<=0)return btEnd('down');if(raidHp(r)-bt.dealt<=0)return btEnd('kill');
- renderBattle()}
-function btNext(){btAdvance()}
-async function btItem(k){const c=charMap()[bt?.cid]||myChar(),it=ITEMS[k];if(!bt||bt.phase==='end'||!it||inv(c)[k]<=0)return;if(!(it.heal||it.kind==='atk'||it.kind==='shield'))return toast('전투에서 쓸 수 없는 아이템이에요');
- try{await spendItem(k,c)}catch(e){return toast('아이템을 쓰지 못했어요')}
- if(it.heal){const b=bt.hp;bt.hp=Math.min(bt.maxHp,bt.hp+healAmt(k,bt.maxHp));btLine(`${it.name}을(를) 썼다. 체력 +${bt.hp-b}`,'good')}
- else if(it.kind==='atk'){bt.buff+=+it.power||0;btLine(`${it.name}을(를) 썼다. 이번 전투 동안 공격력 +${+it.power||0}`,'good')}
- else if(it.kind==='shield'){bt.charm=true;btLine(`${it.name}을(를) 꺼냈다. 다음 피해를 한 번 막는다`,'good')}
- renderBattle()}
-async function btEnd(kind){if(bt.phase==='end')return;bt.phase='end';bt.endKind=kind;const r=raids.find(x=>x.id===bt.raid),c=myChar();
- if(kind==='down')btLine(`${c.name}이(가) 쓰러졌다. 동료들이 끌고 나와 무사히 길드로 돌아왔다.`,'bad');
- if(kind==='kill')btLine(`${r.name}이(가) 쓰러졌다! 토벌 성공!`,'good');
- renderBattle();const cid=bt.cid||me,p=r.participants?.[cid]||{},d=r.debuffs?.[cid]||{};
- try{await saveHp(charMap()[cid],bt.hp,bt.hp<bt.startHp)}catch(e){}
- try{await db.doc('raids/'+r.id).update({participants:{[cid]:{dmg:(+p.dmg||0)+bt.dealt,count:(+p.count||0)+1,lastDay:kday()}},debuffs:{[cid]:{agi:(+d.agi||0)+bt.deb.agi,atk:(+d.atk||0)+bt.deb.atk,def:(+d.def||0)+bt.deb.def}}});
-  bt.saved=true;await db.collection('raids/'+r.id+'/log').add({by:cid,ts:Date.now(),dmg:bt.dealt,text:`피해 ${bt.dealt}${kind==='down'?' · 쓰러짐':''}${kind==='kill'?' · 마지막 일격!':''}`});
-  const fresh=(await db.doc('raids/'+r.id).get()).data();if(fresh&&fresh.status==='active'&&raidHp(fresh)<=0)await db.doc('raids/'+r.id).update({status:'cleared',clearedAt:Date.now(),killer:me,dropPool:(()=>{const own=(bossCfg.drops?.[fresh.boss]||[]).filter(titleObj);return own.length?own:titles.filter(t=>t.drop).map(t=>t.id)})()})}
- catch(e){toast('전투 결과를 저장하지 못했어요')}}
-$('#v-raid').addEventListener('click',e=>{const t=e.target.closest('#btstart,[data-bt]');if(!t)return;
- if(t.id==='btstart')return btStart();const a=t.dataset.bt;if(!bt)return;
- if(a==='go'){bt.idx=-1;btAdvance()}else if(a==='roll')btRoll();else if(a==='next')btNext();
- else if(a.startsWith('item:'))btItem(a.slice(5));else if(['evade','defend'].includes(a)&&bt.phase==='boss')btChoose(a);
- else if(bt.phase==='char')btChoose(a)});
+/* ===== 레이드 파티: 모집 → 모두 준비 → 턴제 전투 =====
+   raids/<id>/party/cur {state:'recruit'|'battle'|'done', members{캐릭터id:{...}}, order[], turn, round, step, turnAt, bossAtk, log{}}
+   · 민첩이 높은 순서로 행동, 모두 한 번씩 행동하면 1라운드. 도중에 들어온 사람은 다음 라운드부터.
+   · 캐릭터마다 하루에 레이드 한 곳만 참여 (participants[id].day). 같은 레이드는 하루에 몇 번이든. */
+const PTIMEOUT=60e3;
+let party=null,partyUnsub=null,partyRid=null,pBusy=false,pRoll=null,pTimer=0;
+const partyRef=rid=>db.doc('raids/'+rid+'/party/cur');
+const partyMax=r=>String(r?.rec||BOSSES[r?.boss]?.rec||'3~4').startsWith('1')?2:4;
+function watchParty(rid){if(partyRid===rid)return;partyUnsub?.();party=null;partyRid=rid;pRoll=null;
+ partyUnsub=db?partyRef(rid).onSnapshot(s=>{party=s.exists?s.data():null;renderBattle()},()=>{}):null}
+const pMembers=P=>Object.entries(P?.members||{}).filter(([,m])=>!m.left).sort((a,b)=>(a[1].at||0)-(b[1].at||0));
+const pMine=P=>pMembers(P).find(([,m])=>m.owner===acct);
+const alive=m=>m&&!m.left&&(+m.hp||0)>0;
+const pLog=(t,cls='')=>({['log']:{[Date.now().toString(36)+Math.random().toString(36).slice(2,6)]:{t,cls,ts:Date.now()}}});
+const pUpd=patch=>partyRef(partyRid).update(patch);
+function computeOrder(P,r,round){const bs=bossStats(r);const list=pMembers(P).filter(([,m])=>alive(m)&&(+m.joinedRound||1)<=round).map(([id,m])=>({id,agi:+m.cb?.agi||0,t:Math.random()}));
+ list.push({id:'boss',agi:bs.agi,t:Math.random()});return list.sort((a,b)=>b.agi-a.agi||b.t-a.t).map(x=>x.id)}
+async function withLease(fn){let L;try{L=await partyRef(partyRid).acquire({holder:acct||'x',ttlMs:4000})}catch(e){return}if(!L?.acquired)return;
+ const s=await partyRef(partyRid).get();return fn(s.exists?s.data():null)}
+
+/* ---- 모집 ---- */
+async function pJoin(){const r=raids.find(x=>x.id===partyRid),c=myChar();if(!r||!c||pBusy)return;
+ if(raids.some(x=>x.id!==r.id&&x.participants?.[c.id]?.day===kday()))return toast('이 캐릭터는 오늘 다른 레이드에 참여했어요. 레이드는 하루에 한 곳만 갈 수 있어요');
+ if(hpState(c).cur<=0)return toast(`체력이 없어요. ${hpLine(c)}`);
+ const P=party;if(pMine(P))return toast('이미 이 파티에 내 캐릭터가 있어요');if(pMembers(P).length>=partyMax(r))return toast('파티가 가득 찼어요');
+ pBusy=true;const cb=combat(c),h=hpState(c),p=r.participants?.[c.id]||{};
+ try{if(!P||P.state==='done')await partyRef(r.id).set({state:'recruit',members:{},order:[],turn:0,round:0,step:0,log:{},createdAt:Date.now()});
+  const cur=(await partyRef(r.id).get()).data();
+  await pUpd({members:{[c.id]:{owner:acct,name:c.name,at:Date.now(),ready:false,left:false,hp:h.cur,maxHp:cb.hp,cb,int:+effStats(c).int||0,buff:0,charm:false,cover:false,used:{},joinedRound:cur?.state==='battle'?(+cur.round||1)+1:1}},...pLog(`${c.name}이(가) 파티에 들어왔다.`)});
+  await db.doc('raids/'+r.id).update({participants:{[c.id]:{day:kday(),count:(+p.count||0)+1}}})}
+ catch(e){toast('파티에 들어가지 못했어요')}pBusy=false}
+async function pReady(){const mm=pMine(party);if(!mm)return;await pUpd({members:{[mm[0]]:{ready:!mm[1].ready}}})}
+async function pLeave(){const mm=pMine(party);if(!mm)return;const [id,m]=mm,c=charMap()[id];
+ try{await pUpd({members:{[id]:{left:true,ready:false}},...pLog(`${m.name}이(가) 파티에서 나갔다.`)});if(party?.state==='battle'){if(c)await saveHp(c,+m.hp||0,(+m.hp||0)<hpState(c).cur);if(party.order?.[party.turn]===id)await pAdvance(party.step);await pCheckEnd()}}catch(e){toast('나가지 못했어요')}}
+async function pStart(){await withLease(async P=>{const r=raids.find(x=>x.id===partyRid);if(!P||P.state!=='recruit'||!r)return;const ms=pMembers(P);if(!ms.length||ms.some(([,m])=>!m.ready))return;
+ const order=computeOrder(P,r,1);await pUpd({state:'battle',round:1,order,turn:0,step:(+P.step||0)+1,turnAt:Date.now(),bossAtk:null,...pLog(`전투 시작! 1라운드 · 순서: ${order.map(id=>id==='boss'?r.name:P.members[id].name).join(' → ')}`,'good')})})}
+async function pReset(){await partyRef(partyRid).set({state:'recruit',members:{},order:[],turn:0,round:0,step:0,log:{},createdAt:Date.now()})}
+
+/* ---- 진행 ---- */
+async function pAdvance(expect){await withLease(async P=>{const r=raids.find(x=>x.id===partyRid);if(!P||P.state!=='battle'||P.step!==expect||!r)return;
+ let t=+P.turn+1,order=P.order,round=+P.round,extra={};
+ const ok=id=>id==='boss'||alive(P.members[id]);
+ while(t<order.length&&!ok(order[t]))t++;
+ if(t>=order.length){round++;order=computeOrder(P,r,round);t=0;while(t<order.length&&!ok(order[t]))t++;extra=pLog(`${round}라운드 · 순서: ${order.map(id=>id==='boss'?r.name:P.members[id].name).join(' → ')}`)}
+ await pUpd({turn:t,round,order,step:+P.step+1,turnAt:Date.now(),bossAtk:null,...extra})})}
+async function pCheckEnd(){const s=await partyRef(partyRid).get(),P=s.data(),r=(await db.doc('raids/'+partyRid).get()).data();if(!P||P.state!=='battle')return;
+ if(r&&raidHp(r)<=0){await pUpd({state:'done',endKind:'kill',...pLog(`${r.name}이(가) 쓰러졌다! 토벌 성공!`,'good')});
+  if(r.status==='active')await db.doc('raids/'+partyRid).update({status:'cleared',clearedAt:Date.now(),killer:me,dropPool:(()=>{const own=(bossCfg.drops?.[r.boss]||[]).filter(titleObj);return own.length?own:titles.filter(t=>t.drop).map(t=>t.id)})()});
+  await db.collection('raids/'+partyRid+'/log').add({by:me,ts:Date.now(),dmg:0,text:`토벌 성공 · 파티: ${pMembers(P).map(([,m])=>m.name).join(', ')}`});return}
+ if(!pMembers(P).some(([,m])=>alive(m))){await pUpd({state:'done',endKind:'wipe',...pLog('파티가 모두 쓰러졌다. 전원 길드로 돌아왔다.','bad')});
+  await db.collection('raids/'+partyRid+'/log').add({by:me,ts:Date.now(),dmg:0,text:`파티 퇴각 · ${pMembers(P).map(([,m])=>m.name).join(', ')}`})}}
+async function pBossAct(){await withLease(async P=>{const r=raids.find(x=>x.id===partyRid);if(!P||P.state!=='battle'||P.order[P.turn]!=='boss'||P.bossAtk?.step===P.step||!r)return;
+ const bs=bossStats(r),live=pMembers(P).filter(([,m])=>alive(m)&&(+m.joinedRound||1)<=P.round);if(!live.length)return;
+ const area=live.length>1&&Math.random()<.3,base=bs.atk+d6()-(area?2:0);let targets=area?live.map(([id])=>id):[pick(live)[0]],note='',patch={};
+ if(!area){const cov=live.find(([id,m])=>m.cover&&id!==targets[0]);if(cov){note=` ${cov[1].name}이(가) 대신 막아선다!`;targets=[cov[0]];patch={members:{[cov[0]]:{cover:false}}}}}
+ await pUpd({...patch,bossAtk:{step:P.step,area,base,targets,resp:{}},...pLog(area?`${r.name}의 광범위 공격!`:`${r.name}이(가) ${P.members[targets[0]].name}을(를) 노린다!${note}`,'bad')})})}
+async function pAfterResp(){const P=(await partyRef(partyRid).get()).data();if(!P?.bossAtk)return;
+ if(P.bossAtk.targets.every(id=>P.bossAtk.resp?.[id]||!alive(P.members[id])))await pAdvance(P.step);await pCheckEnd()}
+
+/* ---- 내 행동 ---- */
+function pAsk(o){pRoll=o;renderBattle()}
+async function pDoRoll(){if(!pRoll||pRoll.rolling)return;pRoll.rolling=true;const o=pRoll,roll=await rollDie($('#btdie')),tot=roll+o.mod,ok=roll===20||(roll!==1&&tot>=o.dc);pRoll=null;
+ try{await o.done(ok,roll,`(주사위 ${roll}+${o.mod}=${tot}, 난이도 ${o.dc})`)}catch(e){toast('저장하지 못했어요')}renderBattle()}
+function pRespond(kind){const P=party,mm=pMine(P);if(!mm||!P?.bossAtk)return;const [id,m]=mm,r=raids.find(x=>x.id===partyRid),bs=bossStats(r),base=P.bossAtk.base,step=P.step;
+ pAsk({label:kind==='evade'?'회피 판정':'방어 판정',mod:kind==='evade'?half(m.cb.agi):half(m.cb.def)+2,dc:kind==='evade'?8+bs.agi:6+bs.atk,done:async(ok,roll,tag)=>{
+  const cur=(await partyRef(partyRid).get()).data();if(cur?.step!==step||cur.bossAtk?.resp?.[id])return;
+  let dmg=0,txt;if(ok)txt=`${m.name}: ${kind==='evade'?'몸을 날려 피했다':'막아냈다'}! 피해 없음 ${tag}`;
+  else if(cur.members[id].charm){txt=`${m.name}: 수호 부적이 공격을 막았다! ${tag}`}else{dmg=Math.max(0,base-(+m.cb.def||0));txt=`${m.name}: ${kind==='evade'?'회피':'방어'} 실패, 피해 ${dmg} ${tag}`}
+  const hp=Math.max(0,(+cur.members[id].hp||0)-dmg);
+  await pUpd({bossAtk:{resp:{[id]:{ok,dmg}}},members:{[id]:{hp,...(!ok&&cur.members[id].charm?{charm:false}:{})}},...pLog(txt+(hp<=0?` · ${m.name}이(가) 쓰러졌다`:''),ok?'good':'bad')});
+  const c=charMap()[id];if(c&&dmg)saveHp(c,hp,true).catch(()=>{});await pAfterResp()}})}
+function pAct(a){const P=party,mm=pMine(P);if(!mm||P?.order?.[P.turn]!==mm[0])return;const [id,m]=mm,r=raids.find(x=>x.id===partyRid),bs=bossStats(r),step=P.step,c=charMap()[id];
+ const fin=async(patch,txt,cls,adv=true)=>{await pUpd({...patch,...pLog(txt,cls)});if(adv)await pAdvance(step);await pCheckEnd()};
+ if(a==='attack'||a.startsWith('skill:')){let s=null,i=-1;if(a.startsWith('skill:')){i=+a.slice(6);s=(c?.skills||[])[i];if(!s||m.used?.[i])return}
+  const used=i>=0?{members:{[id]:{used:{[i]:1}}}}:{};
+  if(s?.type==='extra')return fin(used,`${m.name}의 「${s.name}」! 한 번 더 행동한다.`,'good',false);
+  if(s?.type==='cover')return fin({members:{[id]:{cover:true,used:{[i]:1}}}},`${m.name}의 「${s.name}」! 보스의 다음 단일 공격을 대신 맞는다.`,'good');
+  if(s?.type?.startsWith('weak_')){const st=s.type.slice(5),pw=Math.max(1,+s.power||1),N={agi:'민첩',atk:'공격력',def:'방어력'};
+   return pAsk({label:`「${s.name}」 판정`,mod:half(m.int),dc:10,done:async(ok,roll,tag)=>{if(ok){const d=r.debuffs?.[id]||{};await db.doc('raids/'+r.id).update({debuffs:{[id]:{[st]:(+d[st]||0)-pw}}})}
+    await fin(used,ok?`「${s.name}」 성공! 보스의 ${N[st]} -${pw} ${tag}`:`「${s.name}」이(가) 통하지 않았다 ${tag}`,ok?'good':'bad')}})}
+  const bonus=s?.type==='strike'?Math.max(1,+s.power||1):0;
+  return pAsk({label:s?`「${s.name}」 공격 판정`:'공격 판정',mod:half((+m.cb.atk||0)+(+m.buff||0)),dc:8+bs.def,done:async(ok,roll,tag)=>{let txt;
+   if(ok){let dmg=Math.max(1,(+m.cb.atk||0)+(+m.buff||0)+d6()+bonus-bs.def);if(roll===20)dmg*=2;const p=(await db.doc('raids/'+r.id).get()).data()?.participants?.[id]||{};
+    await db.doc('raids/'+r.id).update({participants:{[id]:{dmg:(+p.dmg||0)+dmg}}});txt=`${m.name}${s?'의 「'+s.name+'」':''} 적중! 피해 ${dmg}${roll===20?' (치명타)':''} ${tag}`}else txt=`${m.name}의 공격이 빗나갔다 ${tag}`;
+   await fin(used,txt,ok?'good':'bad')}})}
+ if(a==='heal')return pAsk({label:'회복 판정',mod:half(m.cb.heal),dc:10,done:async(ok,roll,tag)=>{const amt=ok?(+m.cb.heal||0)+d6():Math.ceil((+m.cb.heal||0)/2),cur=(await partyRef(partyRid).get()).data().members[id],hp=Math.min(+cur.maxHp,(+cur.hp||0)+amt);
+  if(c)saveHp(c,hp,false).catch(()=>{});await fin({members:{[id]:{hp}}},`${m.name} 회복 +${hp-(+cur.hp||0)} ${tag}`,ok?'good':'')}})}
+async function pItem(k){const mm=pMine(party),it=ITEMS[k];if(!mm||!it||party?.state!=='battle')return;const [id,m]=mm,c=charMap()[id];if(!c||inv(c)[k]<=0)return;
+ if(!(it.heal||it.kind==='atk'||it.kind==='shield'))return toast('전투에서 쓸 수 없는 아이템이에요');
+ try{await spendItem(k,c);if(it.heal){const hp=Math.min(+m.maxHp,(+m.hp||0)+healAmt(k,+m.maxHp));await pUpd({members:{[id]:{hp}},...pLog(`${m.name}: ${it.name} · 체력 +${hp-(+m.hp||0)}`,'good')});saveHp(c,hp,false).catch(()=>{})}
+  else if(it.kind==='atk')await pUpd({members:{[id]:{buff:(+m.buff||0)+(+it.power||0)}},...pLog(`${m.name}: ${it.name} · 공격력 +${+it.power||0}`,'good')});
+  else await pUpd({members:{[id]:{charm:true}},...pLog(`${m.name}: ${it.name} · 다음 피해를 막는다`,'good')})}catch(e){toast('아이템을 쓰지 못했어요')}}
+async function pSkip(){const P=party;if(!P||P.state!=='battle'||Date.now()-(+P.turnAt||0)<PTIMEOUT)return;const actor=P.order[P.turn],step=P.step;
+ if(actor==='boss'){if(!P.bossAtk||P.bossAtk.step!==step)return pBossAct();
+  const miss=P.bossAtk.targets.filter(id=>!P.bossAtk.resp?.[id]&&alive(P.members[id])),patch={bossAtk:{resp:{}},members:{}};
+  for(const id of miss){const m=P.members[id],dmg=m.charm?0:Math.max(0,P.bossAtk.base-(+m.cb.def||0));patch.bossAtk.resp[id]={ok:false,dmg,auto:true};patch.members[id]={hp:Math.max(0,(+m.hp||0)-dmg),...(m.charm?{charm:false}:{})}}
+  await pUpd({...patch,...pLog(`응답이 없어 ${miss.map(id=>P.members[id].name).join(', ')}이(가) 그대로 공격을 받았다.`,'bad')});return pAfterResp()}
+ await pUpd(pLog(`${P.members[actor]?.name||'?'}의 차례를 넘겼다.`));await pAdvance(step);await pCheckEnd()}
+
+/* ---- 화면 ---- */
+function renderBattle(){const el=$('#battle');if(!el)return;const r=raids.find(x=>x.id===raidView),c=myChar();if(!r){el.innerHTML='';return}
+ if(partyRid!==r.id)watchParty(r.id);
+ const P=party,ms=pMembers(P),mm=pMine(P),max=partyMax(r),st=P?.state||'recruit',now=Date.now();
+ const logs=Object.values(P?.log||{}).sort((a,b)=>a.ts-b.ts).slice(-40).map(x=>`<p class="${esc(x.cls)}">${esc(x.t)}</p>`).join('');
+ const mrow=(id,m)=>{const on=P?.order?.[P.turn]===id&&st==='battle';return `<div class="pmem${on?' on':''}${alive(m)||st!=='battle'?'':' down'}">${av(charMap()[id]||{name:m.name},'s')}<div class="sp"><div class="row" style="gap:6px"><b>${esc(m.name)}</b>${m.owner===acct?'<span class="meta">(나)</span>':''}${st==='recruit'?`<span class="${m.ready?'title':'meta'}">${m.ready?'준비 완료':'대기 중'}</span>`:''}${m.cover?'<span class="meta">· 대신 맞기</span>':''}${m.charm?'<span class="meta">· 부적</span>':''}${(+m.joinedRound||1)>(+P?.round||0)&&st==='battle'?'<span class="meta">· 다음 라운드부터</span>':''}</div>
+  <div class="xp" style="height:4px;margin:4px 0 0"><b style="width:${Math.max(0,(+m.hp||0)/(+m.maxHp||1)*100)}%;background:var(--ok)"></b></div></div><span class="meta" style="white-space:nowrap">${+m.hp||0} / ${+m.maxHp||0}</span></div>`};
+ if(r.status!=='active'&&st!=='battle'){el.innerHTML=P&&ms.length?`<div class="battle"><h3>마지막 파티</h3>${ms.map(([id,m])=>mrow(id,m)).join('')}</div>`:'';return}
+ let body='';
+ if(st==='recruit'){const todayOther=c&&raids.some(x=>x.id!==r.id&&x.participants?.[c.id]?.day===kday());
+  const can=c&&canWrite&&!mm&&ms.length<max&&!todayOther&&hpState(c).cur>0;
+  body=`<div class="row"><div class="sp"><h3>파티 모집 <span class="meta">${ms.length} / ${max}명</span></h3><p class="note" style="margin:4px 0 0">파티원이 모두 「준비」를 누르면 인원이 다 차지 않아도 전투가 시작돼요. 민첩이 높은 순서로 행동하고, 모두 한 번씩 행동하면 1라운드예요.</p></div></div>
+   <div class="pmems">${ms.map(([id,m])=>mrow(id,m)).join('')||'<p class="meta">아직 아무도 없어요.</p>'}</div>
+   <div class="row" style="margin-top:12px"><span class="sp meta">${!c?'캐릭터를 등록하면 참여할 수 있어요':todayOther?'이 캐릭터는 오늘 다른 레이드에 참여했어요':mm&&mm[0]!==me?`이 파티에는 ${esc(mm[1].name)}(으)로 들어가 있어요`:''}</span>
+   ${mm?`<button class="btn ghost" data-p="leave">나가기</button><button class="btn" data-p="ready">${mm[1].ready?'준비 취소':'준비'}</button>`:`<button class="btn" data-p="join" ${can?'':'disabled'}>${c?esc(c.name)+'(으)로 ':''}파티 참가</button>`}</div>`;
+  if(mm&&ms.length&&ms.every(([,m])=>m.ready)&&!pTimer)pTimer=setTimeout(()=>{pTimer=0;pStart()},400)}
+ else if(st==='battle'){const actor=P.order[P.turn],B=P.bossAtk&&P.bossAtk.step===P.step?P.bossAtk:null,stale=now-(+P.turnAt||0)>PTIMEOUT,bhp=raidHp(r);
+  let act='';
+  if(pRoll)act=`<div class="dicebox"><div class="die" id="btdie">?</div><div class="sp"><b>${esc(pRoll.label)}</b><div class="meta">주사위 + 보정 ${pRoll.mod} 이(가) 난이도 ${pRoll.dc} 이상이면 성공</div></div>${autoRoll?'<span class="meta">자동으로 굴리는 중…</span>':'<button class="btn" data-p="roll">주사위 굴리기</button>'}</div>`;
+  else if(actor==='boss'){if(!B){act=`<p class="meta">${esc(r.name)}이(가) 움직이려 한다…</p>`;if(mm&&ms[0]&&ms.find(([,m])=>alive(m))?.[1].owner===acct&&!pTimer)pTimer=setTimeout(()=>{pTimer=0;pBossAct()},700)}
+   else{const meT=mm&&B.targets.includes(mm[0])&&!B.resp?.[mm[0]]&&alive(mm[1]);const bs=bossStats(r);
+    act=meT?`<p><b>${B.area?'광범위 공격!':'내가 노려졌다!'}</b> 어떻게 막을까요?</p><div class="row"><button class="btn" data-p="evade">회피 <span class="meta">(민첩 · 난이도 ${8+bs.agi})</span></button><button class="btn" data-p="defend">방어 <span class="meta">(방어 · 난이도 ${6+bs.atk})</span></button></div>`
+     :`<p class="meta">${B.targets.filter(id=>!B.resp?.[id]).map(id=>esc(P.members[id]?.name||'?')).join(', ')||'모두'}의 대응을 기다리는 중…</p>`}}
+  else if(mm&&actor===mm[0]){const sk=charMap()[mm[0]]?.skills||[],bs=bossStats(r);
+   act=`<p><b>${esc(mm[1].name)}의 차례.</b> 행동을 하나 고르세요.</p><div class="row"><button class="btn" data-p="attack">공격 <span class="meta">(난이도 ${8+bs.def})</span></button><button class="btn ghost" data-p="heal">회복</button>
+    ${sk.map((s,i)=>`<button class="btn ghost" data-p="skill:${i}" ${mm[1].used?.[i]?'disabled':''} title="${esc(SKTYPES[s.type]||'')}">${esc(s.name)}${mm[1].used?.[i]?' (사용함)':''}</button>`).join('')}</div>`}
+  else act=`<p class="meta">${esc(P.members[actor]?.name||'?')}의 차례를 기다리는 중…</p>`;
+  if(stale&&mm&&!pRoll)act+=`<div class="row" style="margin-top:8px"><span class="sp meta">1분 넘게 진행이 없어요</span><button class="btn ghost small" data-p="skip">차례 넘기기</button></div>`;
+  const items=mm&&c?inv(charMap()[mm[0]]||c):{};
+  body=`<div class="row" style="margin-bottom:8px"><h3 class="sp">${+P.round}라운드</h3><span class="meta">순서: ${P.order.map((id,i)=>`<span class="${i===P.turn?'title':''}">${esc(id==='boss'?r.name:P.members[id]?.name||'?')}</span>`).join(' → ')}</span></div>
+   <div class="row" style="font-size:13.5px"><span class="sp">${esc(r.name)}</span><span>${bhp} / ${+r.maxHp}</span></div><div class="xp" style="height:5px;margin-bottom:10px"><b style="width:${bhp/(+r.maxHp||1)*100}%;background:var(--red)"></b></div>
+   <div class="pmems">${ms.map(([id,m])=>mrow(id,m)).join('')}</div>
+   <div class="btlog">${logs}</div>${act}
+   <div class="row items">${mm?`<span class="meta">아이템</span>${Object.keys(ITEMS).filter(k=>items[k]>0&&ITEMS[k].kind!=='sell').map(k=>`<button class="btn ghost small" data-p="item:${k}" title="${esc(ITEMS[k].desc)}">${esc(ITEMS[k].name)} ${items[k]}</button>`).join('')||'<span class="meta">없음</span>'}<span class="sp"></span><button class="btn ghost small" data-p="leave">파티 나가기</button>`
+    :`<span class="meta sp">전투 중이에요. 자리가 있으면 들어가서 다음 라운드부터 함께 싸울 수 있어요.</span>${c&&ms.length<max&&!raids.some(x=>x.id!==r.id&&x.participants?.[c.id]?.day===kday())&&hpState(c).cur>0?'<button class="btn small" data-p="join">파티 참가</button>':''}`}</div>`;
+  if(pRoll&&autoRoll&&!pRoll.rolling&&!renderBattle.t)renderBattle.t=setTimeout(()=>{renderBattle.t=0;pDoRoll()},450)}
+ else if(st==='done')body=`<h3>${P.endKind==='kill'?'토벌 성공!':'파티 퇴각'}</h3><div class="pmems">${ms.map(([id,m])=>mrow(id,m)).join('')}</div><div class="btlog">${logs}</div>
+  <div class="row"><span class="sp meta">${r.status==='active'?'새 파티를 모아 다시 도전할 수 있어요.':''}</span>${r.status==='active'?'<button class="btn" data-p="reset">새 파티 모집</button>':''}</div>`;
+ el.innerHTML=`<div class="battle"><div class="row" style="justify-content:flex-end;margin-bottom:6px">${autoBox()}</div>${body}</div>`;
+ const lg=el.querySelector('.btlog');if(lg)lg.scrollTop=lg.scrollHeight}
+/* 화면이 다시 그려지지 않아도 보스 차례·시작을 놓치지 않도록 2초마다 확인 */
+setInterval(()=>{if(view()!=='raid'||!party||!partyRid)return;const P=party,mm=pMine(P),ms=pMembers(P);if(!mm)return;
+ if(P.state==='recruit'&&ms.length&&ms.every(([,m])=>m.ready))pStart();
+ else if(P.state==='battle'&&P.order?.[P.turn]==='boss'&&!(P.bossAtk&&P.bossAtk.step===P.step)&&ms.find(([,m])=>alive(m))?.[1].owner===acct)pBossAct()},2000);
+$('#v-raid').addEventListener('click',e=>{const t=e.target.closest('[data-p]');if(!t)return;const a=t.dataset.p;
+ if(a==='join')pJoin();else if(a==='ready')pReady();else if(a==='leave')pLeave();else if(a==='reset')pReset();else if(a==='roll')pDoRoll();else if(a==='skip')pSkip();
+ else if(a==='evade'||a==='defend')pRespond(a);else if(a.startsWith('item:'))pItem(a.slice(5));else pAct(a)});
+
 
 
 /* ---- 아이템 관리 ---- */
