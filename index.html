@@ -204,6 +204,17 @@ dialog.cfm{max-width:min(440px,92vw)}
 .pmems{display:grid;gap:6px;margin:10px 0}
 .pmem{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:14px}
 .pmem.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}.pmem.down{opacity:.45}
+.fwin{position:fixed;z-index:15;display:flex;flex-direction:column;background:#14161d;border:1px solid var(--line2);border-radius:12px;box-shadow:0 18px 50px #000b;resize:both;overflow:hidden;min-width:280px;min-height:220px;max-width:96vw;max-height:92vh}
+.fwin[hidden]{display:none}
+.fwin .fhd{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);cursor:move;user-select:none;touch-action:none;background:rgba(255,255,255,.03)}
+.fwin .fbody{flex:1;overflow:auto;padding:12px 14px}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.icell{border:1px solid var(--line);border-radius:8px;padding:8px;display:grid;gap:4px;align-content:start;font-size:13px}
+.icell .itop{display:flex;gap:8px;align-items:center}.icell .n{font-size:12px;color:var(--dim);margin-left:auto}
+.ico{flex:none;width:36px;height:36px;border-radius:8px;border:1px solid var(--line2);background:rgba(255,255,255,.04);display:grid;place-items:center;overflow:hidden}
+.ico img{width:100%;height:100%;object-fit:cover}.ico svg{width:24px;height:24px}
+.kv .kvbtn{appearance:none;font:inherit;color:inherit;background:none;border:1px solid var(--line);border-radius:6px;padding:6px 2px;cursor:pointer;width:100%}.kv .kvbtn:hover{border-color:var(--acc)}
+.kv .kvbtn b{display:block;font-size:16px}.kv .kvbtn span{font-size:11.5px;color:var(--dim)}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:20;display:none;padding:10px 16px}
 .lb img{display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:6px}
 .fade{animation:in .35s ease}@keyframes in{from{opacity:0;transform:translateY(4px)}}@media(prefers-reduced-motion:reduce){.fade{animation:none}}
@@ -338,6 +349,7 @@ dialog.cfm{max-width:min(440px,92vw)}
    <div style="width:110px"><label for="ipow" style="margin-top:0" id="ipowl">수치</label><input id="ipow" type="number" value="10"></div>
    <div style="width:120px"><label for="ival" style="margin-top:0">판매 가격 (골드)</label><input id="ival" type="number" min="0" value="10"></div></div>
   <label for="idesc">설명 (비우면 효과에 맞게 자동)</label><input id="idesc" maxlength="60">
+  <label>이미지 <span class="meta">(정사각형으로 잘려 128 × 128 로 저장돼요)</span></label><div class="row"><span class="ico" id="iimgprev" style="width:48px;height:48px"></span><label class="btn ghost small" style="margin:0">이미지 선택<input type="file" id="iimg" accept="image/*" hidden></label><button type="button" class="btn ghost small" id="iimgdel" hidden>이미지 빼기</button><span class="meta" id="iimgn"></span></div>
   <div class="row" style="margin-top:10px"><label class="row" style="margin:0;gap:6px;color:var(--ink)"><input type="checkbox" id="iexp" style="width:auto"> 탐색 드롭</label>
    <span class="sp"></span><button type="button" class="btn ghost" id="icancel" hidden>편집 취소</button><button class="btn" id="isave">아이템 추가</button></div>
  </form>
@@ -361,6 +373,8 @@ dialog.cfm{max-width:min(440px,92vw)}
    <div class="row"><select id="rldoc" class="sp" style="min-width:160px"></select><input id="rluid" placeholder="계정 코드" class="sp" style="min-width:160px"><button type="button" class="btn ghost" id="rlbtn">연결</button></div></div></div>
  <div class="sec"><h3>테스트 도구 <span class="meta">· 관리자만</span></h3>
   <div class="row" style="margin-top:8px"><select id="tboss" class="sp" style="min-width:200px"></select><button type="button" class="btn ghost" id="tspawn">레이드 보스 띄우기</button></div>
+  <div class="row" style="margin-top:8px"><select id="txacct" class="sp" style="min-width:200px"></select><button type="button" class="btn ghost" id="txreset">이 계정의 던전 탐색 초기화</button></div>
+  <p class="note" style="margin:4px 0 0">고른 계정의 오늘 탐색과 끝내지 못한 탐색을 지워서, 바로 새로 탐색할 수 있게 해요. 그 사람이 다음에 화면을 열거나 이미 열려 있으면 곧바로 반영돼요.</p>
   <div class="row" style="margin-top:8px"><button type="button" class="btn ghost" id="treset">오늘 던전 탐색 초기화 (내 계정)</button><button type="button" class="btn ghost" id="traid">오늘 레이드 참여 초기화 (내 캐릭터)</button><button type="button" class="btn ghost" id="theal">내 캐릭터 체력 모두 회복</button></div></div>
  <div class="sec"><h3>칭호 관리</h3>
   <p class="note">칭호마다 글자색·배경색과 보너스 스탯을 정해요. 같은 칭호는 누가 달아도 같은 색으로 보여요. 보너스는 비우면 없고, 음수(-)도 적을 수 있어요. 캐릭터에게 칭호를 주려면 캐릭터 관리에서 「보유 칭호」를 체크해요.</p>
@@ -440,6 +454,7 @@ dialog.cfm{max-width:min(440px,92vw)}
  <div class="row"><span class="sp"></span><button class="btn ghost" value="cancel" formnovalidate>닫기</button><button class="btn" value="ok">확인</button></div>
 </form></dialog>
 
+<div id="bagwin" class="fwin" hidden role="dialog" aria-labelledby="bagttl"><div class="fhd" id="baghd"><span id="baghead"></span><b id="bagttl" class="sp">보관함</b><button class="btn ghost small" id="bagx" aria-label="보관함 닫기">닫기</button></div><div class="fbody" id="bagbody"></div></div>
 <div id="toast" class="panel"></div>
 
 <script>
@@ -496,8 +511,10 @@ function subRooms(){unsubRooms?.();unsubRooms=null;rooms=[];if(!db||!me){renderR
  unsubRooms=db.collection('rooms').where('members','array-contains',me).onSnapshot(s=>{rooms=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.last||0)-(a.last||0));renderRooms();renderHome()},()=>{})}
 /* ===== 배포 설정: claude.ai 밖(내 홈페이지)에서 열 때만 쓰여요 =====
    설정은 index.html 옆의 config.js 에 따로 적어요. 그래서 index.html 을 새 버전으로 바꿔도 설정이 지워지지 않아요. */
-const FIREBASE_CONFIG=window.GUILD_CONFIG?.firebase||null; /* 홈페이지에서는 config.js 의 값을 써요 */
-const OWNER_UID=window.GUILD_CONFIG?.owner||'';
+/* 기본값: 이 길드의 Firebase 설정과 주인 계정 코드. config.js 가 있으면 그 값이 먼저예요 */
+const FB_DEFAULT={apiKey:"AIzaSyAWtJE6qWmiVVDHOuJ6qti_v2bOPHqwDHo",authDomain:"dungeon-aa7f7.firebaseapp.com",projectId:"dungeon-aa7f7",storageBucket:"dungeon-aa7f7.firebasestorage.app",messagingSenderId:"495936253684",appId:"1:495936253684:web:f0a67dbd515ed03744f8a1"};
+const FIREBASE_CONFIG=window.GUILD_CONFIG?.firebase?.projectId?window.GUILD_CONFIG.firebase:FB_DEFAULT;
+const OWNER_UID=window.GUILD_CONFIG?.owner||'OMJII6MdXVRIj1tJii0A4sAPBVn1';
 const FB_VER='10.14.1';
 let MODE='claude';
 
@@ -620,7 +637,7 @@ function renderMine(){const c=myChar(),el=$('#mine'),list=myChars();$('.layout')
   <div><div class="xp"><b style="width:${p.into}%"></b></div><div class="meta">경험치 ${p.into} / 100</div></div>
   <div class="stats">${(()=>{const b=combat(c),h=hpState(c);return `<div class="row" style="font-size:13.5px"><span class="sp">체력</span><span>${h.cur} / ${h.max}</span></div><div class="xp" style="height:5px;margin:4px 0"><b style="width:${h.cur/h.max*100}%;background:var(--ok)"></b></div><div class="meta">${hpLine(c)}</div>
    <div class="kv" style="grid-template-columns:repeat(4,1fr);margin:10px 0 0"><div><b>${b.agi}</b><span>민첩</span></div><div><b>${b.atk}</b><span>공격력</span></div><div><b>${b.def}</b><span>방어력</span></div><div><b>${b.heal}</b><span>회복력</span></div></div>`})()}</div>
-  <div class="kv"><div><b>${p.gold}</b><span>골드</span></div><div><b>${p.runs}</b><span>원정</span></div><div><b>${p.loot.length}</b><span>전리품</span></div></div></div>
+  <div class="kv"><div><b>${p.gold}</b><span>골드</span></div><div><b>${p.runs}</b><span>원정</span></div><button class="kvbtn" data-bag="${esc(c.id)}" aria-label="보관함 열기"><b>${bagCount(c)}</b><span>보관함</span></button></div></div>
   <button class="btn ghost small" style="width:100%" data-c="${esc(c.id)}">내 캐릭터 편집</button>${MODE==='firebase'?`<p class="meta" style="margin:10px 0 0;overflow-wrap:anywhere">계정 코드 · ${esc(acct)}</p>`:''}`}
 $('#mine').addEventListener('click',e=>{if(e.target.closest('#tog')){fold=!fold;store('fold',fold);renderMine()}});
 
@@ -776,11 +793,11 @@ function renderEvents(){const m=charMap(),l=$('#evlist');$('#oldev').hidden=!eve
 function renderRoster(){const r=$('#roster');
  r.innerHTML=chars.length?chars.map(c=>{const p=prog(c);return `<button class="card" data-c="${esc(c.id)}"><div class="pf">${av(c)}<div><div>${titleChip(c)}</div><h3>${esc(c.name)}${mine(c.id)?' <span class="meta">(내 캐릭터)</span>':''}</h3><div class="meta"><span class="lv">레벨 ${p.lv}</span> · ${esc(c.cls)} · 원정 ${p.runs}회</div></div></div>${statBars(c)}</button>`}).join(''):'<div class="empty">아직 등록된 모험가가 없어요.</div>'}
 function renderGallery(){}
-function renderAdmin(){if(!isAdmin)return;renderRelink();renderStoryAdmin();renderItemsAdmin();renderAdminList();renderBossAdmin();renderBanners();renderTitles();
+function renderAdmin(){if(!isAdmin)return;renderRelink();renderTxAcct();renderStoryAdmin();renderItemsAdmin();renderAdminList();renderBossAdmin();renderBanners();renderTitles();
  $('#achars').innerHTML=chars.map(c=>{const p=prog(c);return `<tr><td>${esc(c.name)} <span class="meta">${esc(c.cls)}</span></td><td>${titleChip(c)}</td><td>${p.lv}</td><td>${STATS.reduce((s,[k])=>s+(+c.stats?.[k]||0),0)} / ${POOL+(+c.bonus||0)}</td><td><button class="btn ghost small" data-edit="${esc(c.id)}">관리</button></td></tr>`}).join('')||'<tr><td colspan="5" class="meta">캐릭터가 없어요.</td></tr>';
  $('#abgn').textContent=cfg.bg?'배경 이미지 사용 중':'배경 없음';$('#abgmn').textContent=cfg.bgm?'음악 사용 중':'음악 없음';
  $('#adim').value=cfg.dim??.72;$('#adimv').textContent=Math.round((cfg.dim??.72)*100)+'%'}
-function renderAll(){renderHome();renderChar();renderMine();renderExplore();renderHunt();renderRaidCards();renderRaid();renderPlaza();renderRooms();renderEvents();renderRoster();renderGallery();renderAdmin()}
+function renderAll(){renderBag();renderHome();renderChar();renderMine();renderExplore();renderHunt();renderRaidCards();renderRaid();renderPlaza();renderRooms();renderEvents();renderRoster();renderGallery();renderAdmin()}
 $('#onlyme').addEventListener('change',renderPlaza);
 
 /* ---- 배경·음악 ---- */
@@ -815,9 +832,9 @@ function renderChar(){if(view()!=='char')return;const id=charView||me,c=charMap(
    <h3>전투 능력치</h3>${(()=>{const b=combat(c);return `<div class="kv" style="grid-template-columns:repeat(5,1fr)"><div><b>${hpState(c).cur} / ${b.hp}</b><span>체력</span></div><div><b>${b.agi}</b><span>민첩</span></div><div><b>${b.atk}</b><span>공격력</span></div><div><b>${b.def}</b><span>방어력</span></div><div><b>${b.heal}</b><span>회복력</span></div></div><p class="meta" style="margin:-6px 0 0">${esc(hpLine(c))} · 피해를 입은 뒤 10분마다 최대 체력의 10%씩 회복해요</p>`})()}
    <h3>보유 칭호</h3>${(()=>{const o=ownedTitles(c),can=canEditChar(id);return o.length?`<p class="note" style="margin:2px 0 6px">장착한 칭호 하나와, 가지고 있는 모든 [패시브] 칭호의 보너스가 적용돼요.</p><div class="tlist">${o.map(tid=>{const t=titleObj(tid),on=c.titleId===tid,b=bonusText(t.bonus);return `<div class="trow${on?' on':''}${t.passive?' pas':''}">${chipOf(t)}<span class="sp ${b&&on&&!t.passive?'gold':b&&t.passive?'pastxt':'meta'}">${t.passive?'<span class="pastag">[패시브]</span> ':''}${esc(b||'보너스 없음')}</span>${on?'<span class="title">장착 중</span>'+(can?`<button class="btn ghost small" data-equip="">해제</button>`:''):can?`<button class="btn ghost small" data-equip="${esc(tid)}">장착</button>`:''}</div>`}).join('')}</div>`:'<p class="meta" style="margin-top:4px">아직 없음 · 레이드 보상이나 관리자에게서 받을 수 있어요</p>'})()}
    <h3>특수 스킬</h3>${Array.isArray(c.skills)&&c.skills.length?`<div class="sklist">${c.skills.map(k=>`<div><b>${esc(k.name)}</b><span class="meta">${esc(SKTYPES[k.type]||'')} · 위력 ${+k.power||0}${k.desc?' · '+esc(k.desc):''}</span></div>`).join('')}</div>`:'<p class="meta" style="margin-top:4px">아직 없음 · 관리자가 부여할 수 있어요</p>'}
-   <h3>가방 <span class="meta">· 판매용 전리품</span></h3>${(()=>{const bag=(Array.isArray(c.bag)?c.bag:[]).slice().sort((a,b)=>(b.t-a.t)||(b.v-a.v)),can=mine(id)&&canWrite,tot=bag.reduce((a,x)=>a+(+x.v||0),0);
-    return bag.length?`<div class="tlist" style="margin-top:6px">${bag.map(x=>`<div class="trow">${lootHTML(x)}<span class="meta sp">${esc(DG[x.d]?.name||'')}</span>${can?`<button class="btn ghost small" data-sell="${esc(x.id)}">판매</button>`:''}</div>`).join('')}</div>${can?`<div class="row" style="margin-bottom:6px"><span class="meta sp">${bag.length}개 · 모두 팔면 ${tot}골드</span><button class="btn ghost small" data-sell="*">모두 판매</button></div>`:''}`:'<p class="meta" style="margin-top:4px">비어 있어요 · 던전 탐색에서 전리품을 얻을 수 있어요</p>'})()}
-   <h3>아이템</h3>${(()=>{const v=inv(c),ks=Object.keys(ITEMS).filter(k=>v[k]>0),can=mine(id)&&canWrite;return ks.length?`<div class="tlist" style="margin-top:6px">${ks.map(k=>`<div class="trow"><b>${esc(ITEMS[k].name)}</b><span class="meta sp">${esc(ITEMS[k].desc)}</span><span>${v[k]}개</span>${can&&ITEMS[k].heal?`<button class="btn ghost small" data-usepot="${k}">사용</button>`:''}${can&&+ITEMS[k].value>0?`<button class="btn ghost small" data-sellitem="${k}">${+ITEMS[k].value}골드에 판매</button>`:''}</div>`).join('')}</div>`:'<p class="meta" style="margin-top:4px">가진 아이템이 없어요</p>'})()}
+   <h3>보관함</h3>${(()=>{const v=inv(c),ks=Object.keys(ITEMS).filter(k=>v[k]>0),bl=Array.isArray(c.bag)?c.bag.length:0;
+    return `<div class="row" style="margin:6px 0 4px;gap:6px">${ks.slice(0,10).map(k=>`<span title="${esc(ITEMS[k].name)} ×${v[k]}" style="position:relative">${itemIcon(k)}<span class="meta" style="position:absolute;right:-2px;bottom:-6px;background:#14161d;border-radius:6px;padding:0 3px">${v[k]}</span></span>`).join('')}${ks.length>10?'<span class="meta">…</span>':''}</div>
+    <div class="row"><span class="meta sp">아이템 ${ks.reduce((a,k)=>a+v[k],0)}개 · 전리품 ${bl}개</span><button class="btn ghost small" data-bag="${esc(c.id)}">보관함 열기</button></div>`})()}
    <h3>전리품</h3><p class="meta" style="margin-top:4px">${p.loot.length?p.loot.slice(-30).map(esc).join(' · '):'아직 없음'}</p></div></div>
   <h3 style="margin-top:22px">최근 원정</h3>${evs.length?evs.map(e=>{const r=(e.results||[]).find(x=>x.id===id)||{};return `<div class="evmini"><button class="who" data-go="events">${esc(e.title)}</button><span class="meta">${when(e.ts)} · ${e.boss?'격파':'퇴각'} · 경험치 +${+r.exp||0}</span></div>`}).join(''):'<p class="meta">아직 원정 기록이 없어요.</p>'}
   ${art.length?`<h3 style="margin-top:22px">관련 그림</h3><div class="gal" style="margin-top:8px">${art.map(a=>`<button class="art" data-art="${esc(a.id)}"><img alt="" loading="lazy" src="${esc(blob(a.asset))}"></button>`).join('')}</div>`:''}`}
@@ -1128,7 +1145,12 @@ const exCol=()=>db.collection('data/users/'+acct);
 let exToday=null,exOld=null,exId=null;
 const exRef=()=>exCol().doc(exId||('explore-'+kday()));
 const exChar=()=>charMap()[exDoc?.charId]||myChar();
-function pickRun(){const tid='explore-'+kday();exToday=exHist.find(x=>x.id===tid)||null;
+/* 관리자 초기화: config/exreset {<계정>: 시각}. 그 시각 전에 시작한 오늘 탐색·끝내지 못한 탐색은 없는 것으로 보고 지워요 */
+let exResetAt=0;
+const exWiped=x=>exResetAt&&(+x.ts||0)<exResetAt&&(x.id==='explore-'+kday()||x.status==='active');
+async function exApplyReset(){if(!acct||!exResetAt)return;const del=exHist.filter(exWiped);if(!del.length)return;
+ exHist=exHist.filter(x=>!exWiped(x));pickRun();renderExplore();for(const x of del)try{await exCol().doc(x.id).delete()}catch(e){}}
+function pickRun(){exHist=exHist.filter(x=>!exWiped(x));const tid='explore-'+kday();exToday=exHist.find(x=>x.id===tid)||null;
  exOld=exHist.filter(x=>x.id!==tid&&x.status==='active').sort((a,b)=>(b.ts||0)-(a.ts||0))[0]||null;exDoc=exToday||exOld;exId=exDoc?.id||null}
 function watchExplore(){pickRun();renderExplore()}
 /* ---- 이야기 저장소: stories/<id> {dkey, title, opening, stages[{i,intro,success,fail}], boss, clear, retreat, treasure} ---- */
@@ -1416,24 +1438,71 @@ $('#v-raid').addEventListener('click',e=>{const t=e.target.closest('[data-p]');i
 
 
 
+/* ---- 보관함 창: 아이템 + 판매용 전리품. 끌어서 옮기고 오른쪽 아래 모서리로 크기 조절 ---- */
+const GLYPH={heal:'<path d="M10 3h4v3l2 2v11a2 2 0 01-2 2h-4a2 2 0 01-2-2V8l2-2z" fill="#e07a7a55" stroke="#e07a7a"/><path d="M10 13h4M12 11v4" stroke="#fff"/>',
+ atk:'<path d="M5 19l9-9M14 4l6 0 0 6-6 6-6-6z" stroke="#ffd27a" fill="#ffd27a33"/><path d="M4 20l3-3" stroke="#ffd27a"/>',
+ shield:'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z" stroke="#7fd1c7" fill="#7fd1c733"/>',
+ sell:'<path d="M6 9l6-5 6 5-6 11z" stroke="#c4b5ff" fill="#c4b5ff33"/>'};
+const itemGlyph=kind=>`<svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linejoin="round">${GLYPH[kind?.startsWith('heal')?'heal':kind]||GLYPH.sell}</svg>`;
+const itemIcon=(k,sz)=>{const it=ITEMS[k];return `<span class="ico"${sz?` style="width:${sz}px;height:${sz}px"`:''}>${it?.img?`<img alt="" src="${esc(blob(it.img))}">`:itemGlyph(it?.kind)}</span>`};
+const bagCount=c=>{const v=inv(c);return Object.keys(ITEMS).reduce((a,k)=>a+(v[k]||0),0)+(Array.isArray(c?.bag)?c.bag.length:0)};
+let bagCid=null;
+function openBag(id){bagCid=id||me;const w=$('#bagwin'),g=store('bagwin');w.hidden=false;
+ if(g){Object.assign(w.style,{left:g.x+'px',top:g.y+'px',width:g.w+'px',height:g.h+'px'})}else{const W=Math.min(460,innerWidth-24),H=Math.min(540,innerHeight-40);Object.assign(w.style,{left:Math.max(12,innerWidth-W-330)+'px',top:'80px',width:W+'px',height:H+'px'})}
+ keepBagIn();renderBag()}
+function keepBagIn(){const w=$('#bagwin');if(w.hidden)return;const r=w.getBoundingClientRect();w.style.left=Math.min(Math.max(0,r.left),innerWidth-80)+'px';w.style.top=Math.min(Math.max(0,r.top),innerHeight-48)+'px'}
+function saveBagGeo(){const w=$('#bagwin');if(w.hidden)return;const r=w.getBoundingClientRect();store('bagwin',{x:Math.round(r.left),y:Math.round(r.top),w:Math.round(r.width),h:Math.round(r.height)})}
+function renderBag(){const w=$('#bagwin');if(w.hidden)return;const c=charMap()[bagCid];if(!c){w.hidden=true;return}
+ const can=mine(c.id)&&canWrite,v=inv(c),ks=Object.keys(ITEMS).filter(k=>v[k]>0),bag=(Array.isArray(c.bag)?c.bag:[]).slice().sort((a,b)=>(b.t-a.t)||(b.v-a.v)),tot=bag.reduce((a,x)=>a+(+x.v||0),0);
+ $('#baghead').innerHTML=av(c,'s');$('#bagttl').textContent=`${c.name}의 보관함`;
+ $('#bagbody').innerHTML=`<div class="row" style="margin-bottom:8px"><h3 class="sp">아이템 <span class="meta">${ks.reduce((a,k)=>a+v[k],0)}개</span></h3><span class="meta">골드 ${prog(c).gold}</span></div>
+  ${ks.length?`<div class="igrid">${ks.map(k=>{const it=ITEMS[k];return `<div class="icell"><div class="itop">${itemIcon(k)}<b>${esc(it.name)}</b><span class="n">×${v[k]}</span></div><span class="meta">${esc(it.desc)}</span>
+   ${can?`<div class="row" style="gap:4px">${it.heal?`<button class="btn ghost small" data-bagpot="${k}">사용</button>`:''}${+it.value>0?`<button class="btn ghost small" data-bagsell="${k}">${+it.value}골드에 판매</button>`:''}</div>`:''}</div>`}).join('')}</div>`:'<p class="meta">가진 아이템이 없어요.</p>'}
+  <div class="row" style="margin:16px 0 8px"><h3 class="sp">전리품 <span class="meta">${bag.length}개 · ${tot}골드어치</span></h3>${can&&bag.length?`<button class="btn ghost small" data-baglsell="*">모두 판매</button>`:''}</div>
+  ${bag.length?`<div class="tlist">${bag.map(x=>`<div class="trow">${lootHTML(x)}<span class="meta sp">${esc(DG[x.d]?.name||'')}</span>${can?`<button class="btn ghost small" data-baglsell="${esc(x.id)}">판매</button>`:''}</div>`).join('')}</div>`:'<p class="meta">던전 탐색에서 얻은 전리품이 여기에 쌓여요.</p>'}
+  ${can?'':'<p class="note" style="margin-top:12px">다른 사람의 보관함은 볼 수만 있어요.</p>'}`}
+$('#bagx').addEventListener('click',()=>{$('#bagwin').hidden=true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#bagwin').hidden&&!document.querySelector('dialog[open]'))$('#bagwin').hidden=true});
+{const w=$('#bagwin'),hd=$('#baghd');let d=null;
+ hd.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;const r=w.getBoundingClientRect();d={x:e.clientX-r.left,y:e.clientY-r.top};hd.setPointerCapture(e.pointerId)});
+ hd.addEventListener('pointermove',e=>{if(!d)return;w.style.left=Math.min(Math.max(0,e.clientX-d.x),innerWidth-80)+'px';w.style.top=Math.min(Math.max(0,e.clientY-d.y),innerHeight-48)+'px'});
+ const end=()=>{if(d){d=null;saveBagGeo()}};hd.addEventListener('pointerup',end);hd.addEventListener('pointercancel',end);
+ new ResizeObserver(()=>{clearTimeout(w.t);w.t=setTimeout(saveBagGeo,300)}).observe(w);addEventListener('resize',keepBagIn)}
+$('#bagbody').addEventListener('click',async e=>{const c=charMap()[bagCid];if(!c||!mine(c.id)||!canWrite)return;
+ const u=e.target.closest('[data-bagpot]');if(u){u.disabled=true;await useHealOutside(c,u.dataset.bagpot);return}
+ const si=e.target.closest('[data-bagsell]');if(si){const k=si.dataset.bagsell,it=ITEMS[k];if(!it||inv(c)[k]<=0)return;si.disabled=true;
+  try{await spendItem(k,c);await patchChar(c,{soldGold:(+c.soldGold||0)+(+it.value||0)});toast(`${it.name}을(를) ${+it.value}골드에 팔았어요`)}catch(err){toast('팔지 못했어요');si.disabled=false}return}
+ const sb=e.target.closest('[data-baglsell]');if(sb){const bag=Array.isArray(c.bag)?c.bag:[],all=sb.dataset.baglsell==='*',sold=all?bag:bag.filter(x=>x.id===sb.dataset.baglsell);if(!sold.length)return;
+  if(all&&sb.dataset.arm!=='1'){sb.dataset.arm='1';sb.textContent='한 번 더 누르면 모두 판매';return}
+  const val=sold.reduce((a,x)=>a+(+x.v||0),0);sb.disabled=true;try{await patchChar(c,{bag:bag.filter(x=>!sold.includes(x)),soldGold:(+c.soldGold||0)+val});toast(`${val}골드에 팔았어요`)}catch(err){toast('팔지 못했어요');sb.disabled=false}}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-bag]');if(b)openBag(b.dataset.bag)});
+
 /* ---- 아이템 관리 ---- */
 let editItem=null;
 $('#ikind').innerHTML=Object.entries(IKINDS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
 const ipowLabel=()=>{const k=$('#ikind').value;$('#ipowl').textContent={heal_flat:'회복량',heal_pct:'회복 %',atk:'공격력 +',shield:'수치',sell:'수치'}[k];$('#ipow').disabled=k==='shield'||k==='sell'};
-$('#ikind').addEventListener('change',ipowLabel);ipowLabel();
-function resetItemForm(){editItem=null;$('#fitem').reset();$('#isave').textContent='아이템 추가';$('#icancel').hidden=true;ipowLabel()}
+$('#ikind').addEventListener('change',()=>{ipowLabel();drawItemImg()});ipowLabel();
+let itemImg=null,itemImgFile=null;
+function drawItemImg(){const p=$('#iimgprev');p.innerHTML=itemImgFile?`<img alt="" src="${URL.createObjectURL(itemImgFile)}">`:itemImg?`<img alt="" src="${esc(blob(itemImg))}">`:itemGlyph($('#ikind').value);$('#iimgdel').hidden=!(itemImg||itemImgFile);$('#iimgn').textContent=itemImgFile?'저장을 눌러야 반영돼요':''}
+/* 아이템 그림: 가운데를 정사각형으로 잘라 128×128 PNG 로 */
+function squareIcon(file,n=128){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=c.height=n;const s=Math.min(img.width,img.height);
+ c.getContext('2d').drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,n,n);c.toBlob(b=>b?res(b):rej(),'image/png')};img.onerror=rej;img.src=URL.createObjectURL(file)})}
+$('#iimg').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{itemImgFile=await squareIcon(f);drawItemImg()}catch(err){toast('이미지를 열지 못했어요')}});
+$('#iimgdel').addEventListener('click',()=>{itemImg=null;itemImgFile=null;drawItemImg()});
+function resetItemForm(){editItem=null;itemImg=null;itemImgFile=null;$('#fitem').reset();$('#isave').textContent='아이템 추가';$('#icancel').hidden=true;ipowLabel();drawItemImg()}
 $('#icancel').addEventListener('click',resetItemForm);
 $('#fitem').addEventListener('submit',async e=>{e.preventDefault();const name=$('#iname').value.trim();if(!name)return;
- const doc={name,kind:$('#ikind').value,power:Math.trunc(+$('#ipow').value||0),value:Math.max(0,Math.trunc(+$('#ival').value||0)),desc:$('#idesc').value.trim(),explore:$('#iexp').checked,updated:Date.now()};
- try{await db.doc('items/'+(editItem||('it-'+Date.now().toString(36)))).set(doc);toast(editItem?'아이템을 고쳤어요':'아이템을 만들었어요');resetItemForm()}catch(err){toast('저장하지 못했어요')}});
+ const doc={name,kind:$('#ikind').value,power:Math.trunc(+$('#ipow').value||0),value:Math.max(0,Math.trunc(+$('#ival').value||0)),desc:$('#idesc').value.trim(),explore:$('#iexp').checked,img:itemImg||null,updated:Date.now()};
+ const sb=$('#isave');sb.disabled=true;
+ try{if(itemImgFile){if(!assets)throw{code:'noassets'};doc.img=(await assets.upload(itemImgFile,{type:'image/png'})).id}await db.doc('items/'+(editItem||('it-'+Date.now().toString(36)))).set(doc);toast(editItem?'아이템을 고쳤어요':'아이템을 만들었어요');resetItemForm()}catch(err){toast(err?.code==='noassets'?'이 보기에서는 이미지를 올릴 수 없어요':'저장하지 못했어요')}sb.disabled=false});
 function renderItemsAdmin(){if(!isAdmin)return;
- $('#aitems').innerHTML=Object.entries(ITEMS).map(([k,i])=>`<tr><td><b>${esc(i.name)}</b>${i.base?' <span class="meta">기본</span>':''}</td><td>${esc(IKINDS[i.kind]||'')} · ${esc(i.desc)}</td><td>${+i.value||0}골드</td><td>${i.explore?'나옴':'안 나옴'}</td>
+ $('#aitems').innerHTML=Object.entries(ITEMS).map(([k,i])=>`<tr><td><div class="row" style="gap:8px;flex-wrap:nowrap">${itemIcon(k)}<span><b>${esc(i.name)}</b>${i.base?' <span class="meta">기본</span>':''}</span></div></td><td>${esc(IKINDS[i.kind]||'')} · ${esc(i.desc)}</td><td>${+i.value||0}골드</td><td>${i.explore?'나옴':'안 나옴'}</td>
   <td><div class="row" style="gap:4px"><button class="btn ghost small" data-iedit="${esc(k)}">수정</button>${i.base?(itemDocs[k]?`<button class="btn ghost small" data-del="items/${esc(k)}">기본값으로</button>`:''):`<button class="btn ghost small warn" data-del="items/${esc(k)}">삭제</button>`}</div></td></tr>`).join('');
  const cs=$('#gchar').value,is=$('#gitem').value;
  $('#gchar').innerHTML=chars.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');$('#gitem').innerHTML=Object.entries(ITEMS).map(([k,i])=>`<option value="${esc(k)}">${esc(i.name)}</option>`).join('');
  if(cs)$('#gchar').value=cs;if(is)$('#gitem').value=is}
 $('#aitems').addEventListener('click',e=>{const b=e.target.closest('[data-iedit]');if(!b)return;const k=b.dataset.iedit,i=ITEMS[k];if(!i)return;editItem=k;
- $('#iname').value=i.name;$('#ikind').value=i.kind;$('#ipow').value=+i.power||0;$('#ival').value=+i.value||0;$('#idesc').value=itemDocs[k]?.desc||'';$('#iexp').checked=!!i.explore;
+ $('#iname').value=i.name;$('#ikind').value=i.kind;$('#ipow').value=+i.power||0;$('#ival').value=+i.value||0;$('#idesc').value=itemDocs[k]?.desc||'';$('#iexp').checked=!!i.explore;itemImg=i.img||null;itemImgFile=null;drawItemImg();
  $('#isave').textContent='아이템 고치기';$('#icancel').hidden=false;ipowLabel();$('#fitem').scrollIntoView({block:'center'})});
 $('#gbtn').addEventListener('click',async()=>{const c=charMap()[$('#gchar').value],k=$('#gitem').value,n=Math.max(1,Math.trunc(+$('#gqty').value||1));if(!c||!ITEMS[k])return;
  try{const got=c.itemsGot||{};await patchChar(c,{itemsGot:{[k]:(+got[k]||0)+n}});toast(`${c.name}에게 ${ITEMS[k].name} ${n}개를 줬어요`)}catch(err){toast('주지 못했어요')}});
@@ -1452,6 +1521,12 @@ $('#aadmins').addEventListener('change',async e=>{const i=e.target.closest('[dat
 $('#tboss').innerHTML=RAIDBOSSES.map(k=>`<option value="${k}">${esc(BOSSES[k].name)} (${esc(BOSSES[k].rec)})</option>`).join('');
 $('#tspawn').addEventListener('click',async()=>{const k=$('#tboss').value,B=BOSSES[k],dk=Object.keys(DG).find(d=>DG[d].bosses.includes(k))||'goblin';
  try{const ref=await db.collection('raids').add({boss:k,name:B.name,rec:B.rec,dkey:dk,dungeon:DG[dk].name,stats:{agi:B.agi,atk:B.atk,def:B.def},maxHp:B.hp,status:'active',createdAt:Date.now(),by:me,participants:{},debuffs:{},mode:'daily',test:true});toast(`${B.name}을(를) 띄웠어요`);goRaid(ref.id)}catch(err){toast('띄우지 못했어요')}});
+function renderTxAcct(){const el=$('#txacct');if(!el||!isAdmin)return;const cur=el.value,owners=[...new Set(chars.map(c=>c.owner).filter(Boolean))];
+ el.innerHTML=owners.map(o=>`<option value="${esc(o)}">${esc(chars.filter(c=>c.owner===o).map(c=>c.name).join(', '))}${o===acct?' (나)':''}</option>`).join('')||'<option value="">캐릭터를 만든 계정이 없어요</option>';if(cur&&owners.includes(cur))el.value=cur}
+$('#txreset').addEventListener('click',async e=>{const b=e.currentTarget,o=$('#txacct').value;if(!o)return;
+ if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='한 번 더 누르면 초기화';setTimeout(()=>{b.dataset.arm='';b.textContent='이 계정의 던전 탐색 초기화'},4000);return}
+ b.dataset.arm='';b.textContent='이 계정의 던전 탐색 초기화';
+ try{const t=Date.now();await db.doc('config/exreset').update({[o]:t}).catch(()=>db.doc('config/exreset').set({[o]:t}));toast(`${$('#txacct').selectedOptions[0]?.textContent||''} 계정의 던전 탐색을 초기화했어요`)}catch(err){toast('초기화하지 못했어요')}});
 $('#treset').addEventListener('click',async e=>{const b=e.currentTarget;if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='한 번 더 누르면 초기화';return}b.dataset.arm='';b.textContent='오늘 던전 탐색 초기화 (내 계정)';
  try{const ids=exHist.filter(x=>x.id==='explore-'+kday()||x.status==='active').map(x=>x.id);for(const id of ids)await exCol().doc(id).delete();toast('오늘 탐색을 초기화했어요')}catch(err){toast('초기화하지 못했어요')}});
 $('#traid').addEventListener('click',async()=>{const mineIds=myChars().map(c=>c.id);let n=0;
@@ -1526,7 +1601,8 @@ route();renderAll();
  const ok=s=>{if(!s.metadata.fromCache)clearTimeout(slow)};
  const rows=s=>s.docs.map(d=>({id:d.id,...d.data()}));
  db.collection('raids').orderBy('createdAt','desc').limit(20).onSnapshot(s=>{raids=rows(s);renderRaidCards();renderRaid();renderHome();renderMine();renderChar();renderRoster()},()=>{});
- if(acct){watchExplore();exCol().where('kind','==','explore').onSnapshot(s=>{exHist=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.ts||0)-(a.ts||0));pickRun();renderExplore()},()=>{})}
+ if(acct){watchExplore();exCol().where('kind','==','explore').onSnapshot(s=>{exHist=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.ts||0)-(a.ts||0));pickRun();renderExplore();exApplyReset()},()=>{});
+  db.doc('config/exreset').onSnapshot(s=>{exResetAt=+(s.exists&&s.data()[acct])||0;exApplyReset()},()=>{})}
  setInterval(()=>{watchExplore();renderMine();if(view()==='char')renderChar();if(view()==='events'){renderHunt();renderExplore()};if(view()==='raid')renderBattle()},60e3);
  db.collection('stories').orderBy('ts','desc').limit(400).onSnapshot(s=>{stories=s.docs.map(d=>({id:d.id,...d.data()}));renderStoryAdmin()},()=>{});
  db.doc('config/admins').onSnapshot(s=>{adminIds=s.exists&&Array.isArray(s.data().ids)?s.data().ids:[];applyAdmin();renderAdminList()},()=>{});
